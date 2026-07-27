@@ -13,8 +13,11 @@ export default function AddCarPage() {
   useEffect(() => {
     async function checkUser() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) window.location.href = '/login';
-      else setUserId(user.id);
+      if (!user) {
+        window.location.href = '/login';
+      } else {
+        setUserId(user.id);
+      }
     }
     checkUser();
   }, []);
@@ -32,10 +35,9 @@ export default function AddCarPage() {
 
     let imageUrl = '';
 
-    // 1. رفع الصورة إلى Supabase Storage أولاً إن وجدت
     if (imageFile) {
       const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`; // اسم عشوائي فريد للصورة
+      const fileName = `${Math.random()}.${fileExt}`; 
       const filePath = `${userId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -48,17 +50,15 @@ export default function AddCarPage() {
         return;
       }
 
-      // جلب الرابط العام للصورة المرفوعة
       const { data } = supabase.storage.from('car-images').getPublicUrl(filePath);
       imageUrl = data.publicUrl;
     }
 
-    // 2. إرسال بيانات السيارة إلى الجدول مع رابط الصورة
     const { error } = await supabase.from('cars').insert([
       {
-        title: title,
+        name: title,        
         price: Number(price),
-        image_url: imageUrl, // تأكد من وجود هذا العمود في جدولك أو سيتم تجاهله
+        image_url: imageUrl,
         user_id: userId,
       },
     ]);
@@ -66,7 +66,7 @@ export default function AddCarPage() {
     if (error) {
       setMessage({ type: 'error', text: 'فشلت عملية الإضافة: ' + error.message });
     } else {
-      setMessage({ type: 'success', text: '🎉 تم إضافة السيارة مع الصورة بنجاح!' });
+      setMessage({ type: 'success', text: '🎉 تم إضافة السيارة بنجاح ونشرها في السوق!' });
       setTitle('');
       setPrice('');
       setImageFile(null);
@@ -130,6 +130,10 @@ export default function AddCarPage() {
             {loading ? 'جاري رفع البيانات والصورة...' : 'نشر السيارة الآن ✨'}
           </button>
         </form>
+        
+        <div className="mt-6 text-center">
+          <a href="/dashboard" className="text-sm text-blue-600 hover:underline">← العودة للوحة التحكم</a>
+        </div>
       </div>
     </div>
   );
