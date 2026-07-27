@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 // استيراد جسر الاتصال السحابي
-import { supabase } from "../supabaseClient"; 
+import { supabase } from "../supabaseClient";
+
+export const dynamic = 'force-dynamic';
+
 
 interface Car {
   id: number;
