@@ -1,148 +1,137 @@
-"use client";
+'use client';
+import { useEffect, useState, use } from 'react';
+import { supabase } from '@/supabaseClient';
 
-import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
-// استيراد جسر الاتصال السحابي
-import { supabase } from "../../../supabaseClient"; 
-
-interface Car {
-  id: number;
-  name: string;
-  model: string;
-  mileage: string;
-  color: string;
-  price: string;
-  badge: string;
-  badgeColor: string;
-  engine?: string;        // حقل المحرك السحابي ✅
-  fuel?: string;          // حقل الوقود السحابي ✅
-  transmission?: string;  // حقل القير السحابي ✅
-  description?: string;   // حقل الوصف السحابي ✅
-  image?: string;
-}
-
-export default function CarDetails() {
-  const { id } = useParams();
-  const [car, setCar] = useState<Car | null>(null);
+export default function CarDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params); // جلب معرّف السيارة من الرابط
+  const [car, setCar] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  const fetchCarDetails = async () => {
-    if (!id) return;
-    setLoading(true);
-
-    const carId = Array.isArray(id) ? parseInt(id[0]) : parseInt(id);
-
-    const { data, error } = await supabase
-      .from("cars")
-      .select("*")
-      .eq("id", carId) 
-      .single(); 
-
-    if (error) {
-      console.error("خطأ في جلب تفاصيل السيارة:", error.message);
-    } else if (data) {
-      setCar(data);
-    }
-    setLoading(false);
-  };
+  const [messageText, setMessageText] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    fetchCarDetails();
+    async function initPage() {
+      // 1. جلب بيانات المستخدم الحالي (إن وجد)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+
+      // 2. جلب بيانات السيارة المحددة مع تفاصيل المالك
+      const { data: carData, error } = await supabase
+        .from('cars')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (!error) setCar(carData);
+      setLoading(false);
+    }
+    initPage();
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100" dir="rtl">
-        <p className="text-xl text-blue-600 font-bold animate-pulse">جاري جلب تفاصيل السيارة العميقة... ☁️</p>
-      </div>
-    );
-  }
+  // دالة إرسال الرسالة للبائع داخل الموقع
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusMessage({ type: '', text: '' });
 
-  if (!car) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100" dir="rtl">
-        <p className="text-2xl font-bold text-gray-700">عذراً، هذه السيارة غير موجودة في السحاب! ❌</p>
-        <a href="/" className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg">العودة للرئيسية</a>
-      </div>
-    );
-  }
+    if (!currentUserId) {
+      setStatusMessage({ type: 'error', text: 'يرجى تسجيل الدخول أولاً لتتمكن من مراسلة البائع.' });
+      return;
+    }
+
+    if (currentUserId === car.user_id) {
+      setStatusMessage({ type: 'error', text: 'لا يمكنك إرسال رسالة لنفسك، أنت مالك هذه السيارة.' });
+      return;
+    }
+
+    // إرسال الرسالة إلى جدول messages في Supabase
+    const { error } = await supabase.from('messages').insert([
+      {
+        car_id: car.id,
+        sender_id: currentUserId,
+        receiver_id: car.user_id, // بائع السيارة هو المستقبل
+        text: messageText,
+      },
+    ]);
+
+    if (error) {
+      setStatusMessage({ type: 'error', text: 'فشل إرسال الرسالة: ' + error.message });
+    } else {
+      setStatusMessage({ type: 'success', text: '🎉 تم إرسال رسالتك للبائع بنجاح داخل الموقع!' });
+      setMessageText('');
+    }
+  };
+
+  if (loading) return <p className="text-center p-10 font-bold">جاري تحميل تفاصيل السيارة...</p>;
+  if (!car) return <p className="text-center p-10 text-red-500 font-bold">عذراً، السيارة غير موجودة أو تم حذفها.</p>;
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 md:p-12" dir="rtl">
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-gray-50 p-8 text-right" dir="rtl">
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border p-6 md:p-8">
         
-        {/* واجهة عرض الصورة السحابية */}
-        <div className="h-64 md:h-96 bg-gray-200 relative overflow-hidden flex items-center justify-center">
-          {car.image ? (
-            <img src={car.image} alt={car.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-          ) : (
-            <div className="text-gray-400 text-2xl font-bold">🚗 لا توجد صورة متوفرة للسيارة</div>
-          )}
-        </div>
+        {/* زر العودة */}
+        <a href="/" className="text-sm text-blue-600 hover:underline mb-6 inline-block">← العودة للمعرض الرئيسي</a>
 
-        {/* تفاصيل السيارة الأساسية */}
-        <div className="p-6 md:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-6">
+        {/* عرض تفاصيل السيارة */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start border-b pb-8 mb-8">
+          <div className="h-64 md:h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-inner">
+            {car.image_url ? (
+              <img src={car.image_url} alt={car.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">📸 لا توجد صورة متوفرة</div>
+            )}
+          </div>
+
+          <div className="flex flex-col justify-between h-full space-y-4">
             <div>
-              <span className={`${car.badgeColor || 'bg-blue-100 text-blue-800'} text-sm font-semibold px-3 py-1 rounded-full`}>
-                {car.badge}
-              </span>
-              <h1 className="text-3xl font-extrabold text-gray-800 mt-2">{car.name} ({car.model})</h1>
+              <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">تفاصيل المركبة</span>
+              <h1 className="text-3xl font-extrabold text-gray-900 mt-2">{car.name}</h1>
+              <p className="text-sm text-gray-400 mt-1">تاريخ العرض: {new Date(car.created_at).toLocaleDateString('ar-SA')}</p>
             </div>
-            <div className="text-left">
-              <p className="text-sm text-gray-500">السعر المطلوب</p>
-              <p className="text-3xl font-black text-green-600 mt-1">{car.price}</p>
-            </div>
-          </div>
 
-          {/* لوحة المواصفات الفنية العميقة المجلوبة من السحاب 🛠️ */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
-            <div className="bg-gray-50 p-4 rounded-xl text-center">
-              <p className="text-xs text-gray-400">الممشى</p>
-              <p className="font-bold text-gray-800 mt-1">{car.mileage}</p>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <span className="text-xs text-gray-400 block">السعر النهائي</span>
+              <span className="text-3xl font-black text-green-600">{Number(car.price).toLocaleString('ar-SA')}</span>
+              <span className="text-sm font-bold text-gray-500 mr-1">ريال سعودي</span>
             </div>
-            <div className="bg-gray-50 p-4 rounded-xl text-center">
-              <p className="text-xs text-gray-400">المحرك</p>
-              {/* يعرض المحرك السحابي أو قيمة افتراضية إذا كان فارغاً */}
-              <p className="font-bold text-gray-800 mt-1">{car.engine || "2.5 لتر 4 سلندر"}</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl text-center">
-              <p className="text-xs text-gray-400">نوع الوقود</p>
-              <p className="font-bold text-gray-800 mt-1">{car.fuel || "بنزين - ممتاز"}</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl text-center">
-              <p className="text-xs text-gray-400">ناقل الحركة</p>
-              <p className="font-bold text-gray-800 mt-1">{car.transmission || "أوتوماتيك"}</p>
-            </div>
-          </div>
-
-          {/* وصف البائع التفصيلي والكامل 📝 */}
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-gray-800 mb-3">وصف البائع وتفاصيل السيارة:</h3>
-            <p className="text-gray-600 leading-relaxed bg-blue-50/50 p-4 rounded-xl">
-              {car.description || "سيارة ممتازة وبحالة الوكالة، خالية من الصدمات والرش، تشتمل على كامل وسائل الأمان والراحة المتطورة مع صيانة دورية منتظمة."}
-            </p>
-          </div>
-
-          {/* أزرار التحكم والتواصل عبر الواتساب الذكي ببيانات السحاب */}
-          <div className="flex gap-4 border-t pt-6">
-            <a href="/" className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-xl transition-colors block text-center">
-              رجوع للمعرض الرئيسي
-            </a>
-            <button 
-              onClick={() => {
-                const phoneNumber = "966500000000"; // ضع رقمك الحقيقي هنا
-                const message = `السلام عليكم، أنا مهتم بشراء سيارة: ${car.name} موديل ${car.model} المعروضة في منصتكم السحابية. هل هي متوفرة؟`;
-                const whatsappUrl = `https://whatsapp.com{phoneNumber}&text=${encodeURIComponent(message)}`;
-                window.open(whatsappUrl, "_blank");
-              }}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl text-center transition-colors"
-            >
-              تواصل مع البائع عبر الـ واتساب 💬
-            </button>
           </div>
         </div>
+
+        {/* صندوق التواصل الداخلي المحمي */}
+        <div className="max-w-xl bg-gray-50 rounded-2xl border p-6 shadow-inner">
+          <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+            💬 تواصل مع البائع داخل الموقع
+          </h2>
+          <p className="text-xs text-gray-400 mb-4">حافظ على خصوصيتك، تواصلك وتفاوضك يتم بأمان كامل داخل منصتنا دون كشف رقم جوالك.</p>
+
+          {statusMessage.text && (
+            <p className={`p-3 rounded mb-4 text-xs font-semibold text-center ${
+              statusMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+              {statusMessage.text}
+            </p>
+          )}
+
+          <form onSubmit={handleSendMessage} className="space-y-4">
+            <textarea
+              rows={4}
+              placeholder="اكتب استفسارك أو عرضك السعري للبائع هنا..."
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              className="w-full border p-3 rounded-xl focus:outline-blue-500 text-sm bg-white"
+              required
+            ></textarea>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition"
+            >
+              إرسال الرسالة المشفرة للوصول الفوري 🚀
+            </button>
+          </form>
+        </div>
+
       </div>
-    </main>
+    </div>
   );
 }

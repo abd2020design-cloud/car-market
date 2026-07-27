@@ -144,9 +144,13 @@ export default function HomePage() {
                     <span className="text-sm font-bold text-gray-500 mr-1">ريال</span>
                   </div>
                   
-                  <button className="bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-bold transition-all">
-                    التفاصيل
-                  </button>
+                  <button 
+  onClick={() => window.location.href = `/cars/${car.id}`}
+  className="bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-bold transition-all"
+>
+  التفاصيل
+</button>
+
                 </div>
               </div>
 
