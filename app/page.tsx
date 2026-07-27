@@ -22,7 +22,7 @@ export default function HomePage() {
 
       if (!error) {
         setCars(data || []);
-        setFilteredCars(data || []); // ضبط البيانات الأولية المعروضة
+        setFilteredCars(data || []);
       }
       setLoading(false);
     }
@@ -33,19 +33,16 @@ export default function HomePage() {
   useEffect(() => {
     let result = cars;
 
-    // الفلترة بحسب نص البحث (الاسم)
     if (searchTerm) {
       result = result.filter((car) =>
         (car.name || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // الفلترة بحسب الحد الأدنى للسعر
     if (minPrice) {
       result = result.filter((car) => car.price >= Number(minPrice));
     }
 
-    // Fleترة بحسب الحد الأعلى للسعر
     if (maxPrice) {
       result = result.filter((car) => car.price <= Number(maxPrice));
     }
@@ -102,25 +99,57 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* نتائج عرض السيارات المفلترة */}
+        {/* شبكة عرض السيارات بتصميم مطور ومحسّن */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCars.map((car) => (
-            <div key={car.id} className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-lg transition">
-              <div className="h-48 bg-gray-200 relative">
+            <div key={car.id} className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+              
+              {/* منطقة الصورة وشارة حالة السيارة */}
+              <div className="h-52 bg-gray-100 relative group overflow-hidden">
                 {car.image_url ? (
-                  <img src={car.image_url} alt={car.name} className="w-full h-full object-cover" />
+                  <img 
+                    src={car.image_url} 
+                    alt={car.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">📸 لا توجد صورة</div>
+                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                    <span className="text-3xl">📸</span>
+                    <span className="text-xs font-medium">لا توجد صور متوفرة</span>
+                  </div>
                 )}
+                <span className="absolute top-3 right-3 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                  متاحة للبيع
+                </span>
               </div>
 
-              <div className="p-5">
-                <h3 className="font-bold text-xl text-gray-800 mb-2">{car.name}</h3>
-                <div className="flex justify-between items-center mt-4">
-                  <span className="text-green-600 font-extrabold text-lg">{car.price?.toLocaleString()} ريال</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">متاحة</span>
+              {/* تفاصيل السيارة الأساسية */}
+              <div className="p-5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-xl text-gray-800 mb-2 hover:text-blue-600 transition-colors">
+                    {car.name}
+                  </h3>
+                  <p className="text-xs text-gray-400 mb-4">
+                    تاريخ النشر: {new Date(car.created_at).toLocaleDateString('ar-SA')}
+                  </p>
+                </div>
+
+                {/* عرض السعر المنسق مع العملة المحلية */}
+                <div className="flex justify-between items-center pt-3 border-t border-gray-50">
+                  <div className="text-right">
+                    <span className="text-xs text-gray-400 block">السعر المطلوب</span>
+                    <span className="text-2xl font-extrabold text-green-600">
+                      {Number(car.price).toLocaleString('ar-SA')}
+                    </span>
+                    <span className="text-sm font-bold text-gray-500 mr-1">ريال</span>
+                  </div>
+                  
+                  <button className="bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                    التفاصيل
+                  </button>
                 </div>
               </div>
+
             </div>
           ))}
         </div>
@@ -132,7 +161,6 @@ export default function HomePage() {
     </div>
   );
 }
-
 
 
 
