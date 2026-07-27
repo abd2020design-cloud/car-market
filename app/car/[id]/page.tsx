@@ -2,8 +2,15 @@
 import { useEffect, useState, use } from 'react';
 import { supabase } from '@/supabaseClient';
 
-export default function CarDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params); // جلب معرّف السيارة من الرابط
+type PageParams = {
+  id: string;
+};
+
+export default function CarDetailPage({ params }: { params: Promise<PageParams> }) {
+  // حل مشكلة الـ 404 عبر فك تشفير المعرف بشكل متوافق مع كافة الإصدارات
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
+
   const [car, setCar] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [messageText, setMessageText] = useState('');
@@ -12,11 +19,11 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     async function initPage() {
-      // 1. جلب بيانات المستخدم الحالي (إن وجد)
+      // 1. جلب بيانات المستخدم الحالي
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setCurrentUserId(user.id);
 
-      // 2. جلب بيانات السيارة المحددة مع تفاصيل المالك
+      // 2. جلب تفاصيل السيارة من قاعدة البيانات
       const { data: carData, error } = await supabase
         .from('cars')
         .select('*')
@@ -29,7 +36,6 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
     initPage();
   }, [id]);
 
-  // دالة إرسال الرسالة للبائع داخل الموقع
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatusMessage({ type: '', text: '' });
@@ -44,12 +50,11 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
       return;
     }
 
-    // إرسال الرسالة إلى جدول messages في Supabase
     const { error } = await supabase.from('messages').insert([
       {
         car_id: car.id,
         sender_id: currentUserId,
-        receiver_id: car.user_id, // بائع السيارة هو المستقبل
+        receiver_id: car.user_id,
         text: messageText,
       },
     ]);
@@ -69,10 +74,8 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
     <div className="min-h-screen bg-gray-50 p-8 text-right" dir="rtl">
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border p-6 md:p-8">
         
-        {/* زر العودة */}
         <a href="/" className="text-sm text-blue-600 hover:underline mb-6 inline-block">← العودة للمعرض الرئيسي</a>
 
-        {/* عرض تفاصيل السيارة */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start border-b pb-8 mb-8">
           <div className="h-64 md:h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-inner">
             {car.image_url ? (
@@ -97,7 +100,6 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        {/* صندوق التواصل الداخلي المحمي */}
         <div className="max-w-xl bg-gray-50 rounded-2xl border p-6 shadow-inner">
           <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
             💬 تواصل مع البائع داخل الموقع
