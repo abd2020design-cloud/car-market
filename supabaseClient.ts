@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// جلب المفاتيح البيئية مع حماية تفادي الانهيار أونلاين
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
-// إنشاء العميل فقط إذا كانت البيانات متوفرة لمنع انهيار الـ Build
-export const supabase = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey) 
-  : null as any;
+// إنشاء اتصال سوبابيس الآمن والمستقر
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 
