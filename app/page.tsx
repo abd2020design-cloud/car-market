@@ -29,7 +29,7 @@ export default function HomePage() {
     fetchCars();
   }, []);
 
-  // 2. دالة تشغيل الفلترة والتصفية تلقائياً عند تغيير أي مدخل
+  // 2. دالة تشغيل الفلترة والتصفية تلقائياً
   useEffect(() => {
     let result = cars;
 
@@ -50,51 +50,82 @@ export default function HomePage() {
     setFilteredCars(result);
   }, [searchTerm, minPrice, maxPrice, cars]);
 
-  if (loading) return <p className="text-center p-10 font-bold">جاري تحميل سوق السيارات...</p>;
+  if (loading) return <p className="text-center p-10 font-bold">جاري تحميل سوق المليون سيارة...</p>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 text-right" dir="rtl">
-      {/* الهيدر العلوي */}
-      <header className="max-w-6xl mx-auto flex justify-between items-center mb-8 border-b pb-4">
-        <h1 className="text-3xl font-extrabold text-gray-900">سوق السيارات الحديث 🚗</h1>
-        <a href="/login" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
-          لوحة التحكم / دخول البائعين
-        </a>
+    <div className="min-h-screen bg-gray-50 text-right" dir="rtl">
+      
+      {/* 🌐 شريط التنقل العلوي المحترف (Navbar) بالشعار الجديد والاسم الفخم */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
+          
+          {/* الشعار المطور مع شارة المليون 1M */}
+          <div className="flex items-center gap-8">
+            <a href="/" className="flex items-center gap-3 group">
+              <div className="bg-blue-600 text-white font-black text-sm px-2.5 py-1.5 rounded-xl shadow-md shadow-blue-200 group-hover:bg-blue-700 transition-colors">
+                1M
+              </div>
+              <div className="flex flex-col text-right">
+                <span className="text-xl font-black text-gray-950 tracking-tight group-hover:text-blue-600 transition-colors">
+                  سوق المليون سيارة
+                </span>
+                <span className="text-[10px] text-gray-400 font-medium -mt-1">منصة البيع والشراء الأولى</span>
+              </div>
+            </a>
+            <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-gray-600">
+              <a href="/" className="text-blue-600 hover:text-blue-700 transition">الرئيسية</a>
+              <a href="/blog" className="hover:text-blue-600 transition">المدونة والأخبار</a>
+            </nav>
+          </div>
+
+          {/* أزرار لوحة التحكم والإضافة السريعة للبائعين */}
+          <div className="flex items-center gap-3">
+            <a href="/dashboard" className="text-sm font-bold text-gray-700 hover:text-blue-600 px-4 py-2 rounded-xl transition">
+              حسابي / دخول 👤
+            </a>
+            <a href="/dashboard/add-car" className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-green-700 shadow-sm hover:shadow transition-all">
+              أضف سيارتك مجاناً ➕
+            </a>
+          </div>
+
+        </div>
       </header>
 
-      <main className="max-w-6xl mx-auto">
+      {/* المحتوى الرئيسي للموقع */}
+      <main className="max-w-6xl mx-auto px-4 pt-8 pb-16">
+        
         {/* شريط أدوات البحث والفلاتر */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">ابحث عن سيارة محددة</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">ابحث عن سيارة محددة</label>
             <input
               type="text"
               placeholder="مثال: كامري، لاندكروزر..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border p-2 rounded-lg focus:outline-blue-500 text-sm"
+              className="w-full border border-gray-200 p-2.5 rounded-xl focus:outline-blue-500 text-sm bg-gray-50"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">الحد الأدنى للسعر (ريال)</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">الحد الأدنى للسعر (ريال)</label>
             <input
               type="number"
               placeholder="من"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
-              className="w-full border p-2 rounded-lg focus:outline-blue-500 text-sm"
+              className="w-full border border-gray-200 p-2.5 rounded-xl focus:outline-blue-500 text-sm bg-gray-50"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">الحد الأعلى للسعر (ريال)</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">الحد الأعلى للسعر (ريال)</label>
             <input
               type="number"
               placeholder="إلى"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
-              className="w-full border p-2 rounded-lg focus:outline-blue-500 text-sm"
+              className="w-full border border-gray-200 p-2.5 rounded-xl focus:outline-blue-500 text-sm bg-gray-50"
             />
           </div>
         </section>
@@ -144,13 +175,13 @@ export default function HomePage() {
                     <span className="text-sm font-bold text-gray-500 mr-1">ريال</span>
                   </div>
                   
+                  {/* زر التفاصيل المطور بعد حل مشكلة الـ 404 */}
                   <button 
-  onClick={() => window.location.href = `/cars/${car.id}`}
-  className="bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-bold transition-all"
->
-  التفاصيل
-</button>
-
+                    onClick={() => window.location.href = `/cars/${car.id}`}
+                    className="bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                  >
+                    التفاصيل
+                  </button>
                 </div>
               </div>
 
@@ -165,6 +196,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
