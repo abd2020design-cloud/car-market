@@ -1,91 +1,156 @@
 'use client';
-import { useEffect, useState } from 'react';
+export const dynamic = 'force-dynamic'; // 🌟 السطر السحري لحل مشكلة الـ Build Failed أونلاين
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function AddCarPage() {
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
 
+  // التحقق من تسجيل دخول المستخدم وجلب معرفه الخاص
   useEffect(() => {
-    async function getProfile() {
+    async function checkUser() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/login';
+        window.location.href = '/login'; // توجيه لصفحة الدخول إذا لم يكن مسجلاً
         return;
       }
-      setUser(user);
-
-      // جلب رتبة المستخدم من جدول الـ profiles
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (profile) setRole(profile.role);
-      setLoading(false);
+      setUserId(user.id);
     }
-    getProfile();
+    checkUser();
   }, []);
 
-  if (loading) return <p className="text-center p-10 font-bold">جاري تحميل لوحة التحكم...</p>;
+  // دالة معالجة رفع السيارة وقاعدة البيانات
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatusMessage({ type: '', text: '' });
 
-  const isAdmin = role === 'admin';
+    if (!userId) {
+      setStatusMessage({ type: 'error', text: 'خطأ: لم يتم التعرف على حسابك الشخصي.' });
+      setLoading(false);
+      return;
+    }
+
+    let imageUrl = '';
+
+    // 1. رفع الصورة إلى الـ Storage في حال اختيارها
+    if (imageFile) {
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${Math.random()}-${Date.now()}.${fileExt}`;
+      const filePath = `car-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('cars-bucket')
+        .upload(filePath, imageFile);
+
+      if (uploadError) {
+        setStatusMessage({ type: 'error', text: 'فشل رفع الصورة: ' + uploadError.message });
+        setLoading(false);
+        return;
+      }
+
+      // جلب الرابط العام المباشر للصورة المرفوعة
+      const { data } = supabase.storage.from('cars-bucket').getPublicUrl(filePath);
+      imageUrl = data.publicUrl;
+    }
+
+    // 2. إدخال بيانات السيارة الجديدة في جدول cars بالـ Supabase
+    const { error: insertError } = await supabase.from('cars').insert([
+      {
+        name: name,
+        price: Number(price),
+        image_url: imageUrl,
+        user_id: userId, // ربط السيارة بالمالك الحالي
+      },
+    ]);
+
+    if (insertError) {
+      setStatusMessage({ type: 'error', text: 'فشل حفظ البيانات: ' + insertError.message });
+    } else {
+      setStatusMessage({ type: 'success', text: '🎉 تم إدراج سيارتك بنجاح وعرضها في المعرض الرئيسي!' });
+      setName('');
+      setPrice('');
+      setImageFile(null);
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8 text-right" dir="rtl">
-      <div className="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-sm border">
+      <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-sm border">
         
-        {/* هيدر لوحة التحكم الديناميكي */}
-        <header className="border-b pb-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        {/* الهيدر العلوي */}
+        <header className="border-b pb-4 mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-black text-gray-900">
-              {isAdmin ? '🛠️ لوحة تحكم الأدمن العام' : '🚗 لوحة تحكم البائع'}
-            </h1>
-            <p className="text-xs text-gray-400 mt-1">مرحباً بك: {user?.email}</p>
+            <h1 className="text-2xl font-black text-gray-900">➕ إضافة سيارة جديدة للبيع</h1>
+            <p className="text-xs text-gray-400 mt-1">امْلأ البيانات لرفع مركبتك في سوق الألف مليون</p>
           </div>
-          <a href="/" className="text-sm text-blue-600 hover:underline">← العودة للمعرض الرئيسي</a>
+          <a href="/dashboard" className="text-sm text-blue-600 hover:underline">← العودة للوحة التحكم</a>
         </header>
 
-        {/* أزرار الانتقال والتحكم السريع */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          
-          {/* زر إضافة سيارة جديدة */}
-          <a href="/dashboard/add-car" className="p-5 bg-blue-50 border border-blue-100 rounded-2xl hover:bg-blue-100 transition text-right block group">
-            <span className="text-2xl block mb-2">➕</span>
-            <span className="font-bold text-blue-900 block group-hover:text-blue-700">إضافة سيارة جديدة</span>
-            <span className="text-xs text-blue-600 mt-1 block">عرض سيارة جديدة في السوق فورا</span>
-          </a>
-
-          {/* زر صندوق الرسائل المحمي الجديد 📬 */}
-          <a href="/dashboard/inbox" className="p-5 bg-purple-50 border border-purple-100 rounded-2xl hover:bg-purple-100 transition text-right block group">
-            <span className="text-2xl block mb-2">📬</span>
-            <span className="font-bold text-purple-900 block group-hover:text-purple-700">صندوق الرسائل الداخلي</span>
-            <span className="text-xs text-purple-600 mt-1 block">استقبل رسائل وعروض المشترين ورد عليها</span>
-          </a>
-
-          {/* زر تسجيل الخروج الآمن */}
-          <button 
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.href = '/';
-            }}
-            className="p-5 bg-red-50 border border-red-100 rounded-2xl hover:bg-red-100 transition text-right block group w-full"
-          >
-            <span className="text-2xl block mb-2">🚪</span>
-            <span className="font-bold text-red-900 block group-hover:text-red-700">تسجيل الخروج</span>
-            <span className="text-xs text-red-600 mt-1 block">إنهاء الجلسة الحالية وتأمين الحساب</span>
-          </button>
-
-        </div>
-
-        {/* تذكير الأدمن بمهامه */}
-        {isAdmin && (
-          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-900 text-sm font-semibold">
-            📢 بصفتك الأدمن العام، يمكنك إدارة كافة المركبات المعروضة، ومراقبة الرسائل المتبادلة لمنع المخالفات بأمان كامل.
-          </div>
+        {/* رسائل الحالة الإشعارية */}
+        {statusMessage.text && (
+          <p className={`p-4 rounded-xl text-sm font-bold text-center mb-6 ${
+            statusMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
+            {statusMessage.text}
+          </p>
         )}
+
+        {/* نموذج الإدخال (Form) */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">اسم ونوع السيارة</label>
+            <input
+              type="text"
+              placeholder="مثال: تويوتا كامري 2025 فل كامل"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-gray-200 p-3 rounded-xl focus:outline-blue-500 text-sm bg-gray-50"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">السعر المطلوب (ريال سعودي)</label>
+            <input
+              type="number"
+              placeholder="مثال: 95000"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="w-full border border-gray-200 p-3 rounded-xl focus:outline-blue-500 text-sm bg-gray-50"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">صورة المركبة الأساسية</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setImageFile(e.target.files[0]);
+                }
+              }}
+              className="w-full border border-gray-200 p-3 rounded-xl text-sm bg-gray-50 file:ml-4 file:py-1.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 transition disabled:bg-gray-300 shadow-md shadow-blue-100"
+          >
+            {loading ? 'جاري رفع وحفظ البيانات الآن...' : '🚀 انشر السيارة في المعرض فوراً'}
+          </button>
+        </form>
 
       </div>
     </div>
