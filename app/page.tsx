@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic'; // 🌟 السطر السحري لكسر كاش السيرفر وجلب البيانات فوراً
+
 import { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
 
@@ -15,16 +17,21 @@ export default function HomePage() {
   // 1. جلب السيارات من قاعدة البيانات عند فتح الصفحة
   useEffect(() => {
     async function fetchCars() {
-      const { data, error } = await supabase
-        .from('cars')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('cars')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (!error) {
-        setCars(data || []);
-        setFilteredCars(data || []);
+        if (!error && data) {
+          setCars(data);
+          setFilteredCars(data);
+        }
+      } catch (err) {
+        console.error("خطأ في جلب البيانات:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchCars();
   }, []);
