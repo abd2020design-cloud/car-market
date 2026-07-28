@@ -50,24 +50,24 @@ export default function HomePage() {
     setFilteredCars(result);
   }, [searchTerm, minPrice, maxPrice, cars]);
 
-  if (loading) return <p className="text-center p-10 font-bold">جاري تحميل سوق المليون سيارة...</p>;
+  if (loading) return <p className="text-center p-10 font-bold">جاري تحميل سوق الألف مليون للسيارات...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 text-right" dir="rtl">
       
-      {/* 🌐 شريط التنقل العلوي المحترف (Navbar) بالشعار الجديد والاسم الفخم */}
+      {/* 🌐 شريط التنقل العلوي المحترف (Navbar) */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
           
-          {/* الشعار المطور مع شارة المليون 1M */}
+          {/* الشعار المطور مع شارة الألف مليون 1B */}
           <div className="flex items-center gap-8">
             <a href="/" className="flex items-center gap-3 group">
               <div className="bg-blue-600 text-white font-black text-sm px-2.5 py-1.5 rounded-xl shadow-md shadow-blue-200 group-hover:bg-blue-700 transition-colors">
-                1M
+                1B
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-xl font-black text-gray-950 tracking-tight group-hover:text-blue-600 transition-colors">
-                  سوق المليون سيارة
+                  سوق الألف مليون للسيارات
                 </span>
                 <span className="text-[10px] text-gray-400 font-medium -mt-1">منصة البيع والشراء الأولى</span>
               </div>
@@ -92,8 +92,18 @@ export default function HomePage() {
       </header>
 
       {/* المحتوى الرئيسي للموقع */}
-      <main className="max-w-6xl mx-auto px-4 pt-8 pb-16">
+      <main className="max-w-6xl mx-auto px-4 pt-10 pb-16">
         
+        {/* 🎯 قسم الرؤية والهدف الملهم */}
+        <section className="text-center mb-10 max-w-2xl mx-auto space-y-3">
+          <h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">
+            مرحباً بك في <span className="text-blue-600">سوق الألف مليون للسيارات</span>
+          </h2>
+          <p className="text-gray-600 font-bold text-base md:text-lg bg-blue-50/50 border border-blue-100/50 py-3 px-6 rounded-2xl inline-block shadow-sm">
+            ✨ "ليس مجرد اسم، بل هو هدف سنحققه بإذن الله"
+          </p>
+        </section>
+
         {/* شريط أدوات البحث والفلاتر */}
         <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
@@ -175,7 +185,6 @@ export default function HomePage() {
                     <span className="text-sm font-bold text-gray-500 mr-1">ريال</span>
                   </div>
                   
-                  {/* زر التفاصيل المطور بعد حل مشكلة الـ 404 */}
                   <button 
                     onClick={() => window.location.href = `/cars/${car.id}`}
                     className="bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-bold transition-all"
