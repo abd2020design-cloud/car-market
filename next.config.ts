@@ -5,10 +5,7 @@ const nextConfig: NextConfig = {
     // 🌟 إجبار السيرفر على تخطي أخطاء التايب سكريبت أثناء الـ Build
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // 🌟 إجبار السيرفر على تخطي أخطاء الفحص الإملائي والتحذيرات
-    ignoreDuringBuilds: true,
-  },
+  
 };
 
 export default nextConfig;
