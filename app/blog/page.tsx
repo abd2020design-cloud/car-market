@@ -19,11 +19,16 @@ async function getWordPressPosts() {
     }
 
     return await res.json()
-  } catch (error: any) {
-    // طباعة الخطأ في السيرفر دون إفساد تجربة تصفح الزائر
-    console.error("❌ حدث خطأ أثناء الاتصال بووردبريس:", error.message)
-    return []
-  }
+ 
+//  الكود المطور (يحمي الصفحة ويعرض المقالات القديمة بدلاً من رسالة الخطأ)
+} catch (error: any) {
+  console.error("❌ حدث خطأ أثناء الاتصال بووردبريس:", error.message);
+  
+  // إذا فشل الاتصال، نحاول استخدام المقالات المخزنة سابقاً في المتغير إن وجدت
+  return typeof posts !== 'undefined' ? posts : [];
+}
+
+
 }
 
 export default async function BlogPage() {
