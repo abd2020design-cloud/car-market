@@ -74,7 +74,7 @@ export default function HomePage() {
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-xl font-black text-gray-950 tracking-tight group-hover:text-blue-600 transition-colors">
-                  سوق الألف مليون للسيارات
+                  سوق ون بي للسيارات
                 </span>
                 <span className="text-[10px] text-gray-400 font-medium -mt-1">منصة البيع والشراء الأولى</span>
               </div>
