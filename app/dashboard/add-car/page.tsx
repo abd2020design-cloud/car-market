@@ -1,146 +1,159 @@
-'use client';
-export const dynamic = 'force-dynamic'; // 🌟 السطر السحري لتخطي خطأ الـ Build أونلاين
+'use client' // تفعيل التفاعلية لإدخال البيانات والرفع
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/supabaseClient';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/supabaseClient'
 
-export default function InboxPage() {
-  const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
+export default function AddCarPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [carData, setCarData] = useState({
+    title: '',
+    price: '',
+    model: '',
+    description: '',
+    image_url: '',
+    whatsapp_number: '',
+    seller_type: 'individual' // القيمة الافتراضية حساب فرد
+  })
 
-  useEffect(() => {
-    async function fetchMessages() {
-      // 1. جلب بيانات المستخدم الحالي
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = '/login';
-        return;
-      }
-      setCurrentUserId(user.id);
+  // دالة معالجة ورفع الصورة أولاً إلى حوض التخزين cars-bucket
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const file = e.target.files[0]
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Math.random()}.${fileExt}`
+    const filePath = `${fileName}`
 
-      // 2. جلب رتبة المستخدم
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+    setLoading(true)
+    
+    // رفع الملف لحوض cars-bucket الذي أصلحنا صلاحياته سابقاً
+    const { error: uploadError } = await supabase.storage
+      .from('cars-bucket')
+      .upload(filePath, file)
 
-      let query = supabase.from('messages').select('*, cars(name)');
-      
-      if (profile?.role !== 'admin') {
-        query = query.or(`receiver_id.eq.${user.id},sender_id.eq.${user.id}`);
-      }
-
-      const { data: messagesData, error } = await query.order('created_at', { ascending: false });
-      if (!error) {
-        setMessages(messagesData || []);
-      }
-      setLoading(false);
+    if (uploadError) {
+      setLoading(false)
+      alert('فشل رفع الصورة: ' + uploadError.message)
+      return
     }
 
-    fetchMessages();
-  }, []);
+    // جلب الرابط السحابي العام الحي للصورة المرفوعة
+    const { data } = supabase.storage.from('cars-bucket').getPublicUrl(filePath)
+    
+    setCarData({ ...carData, image_url: data.publicUrl })
+    setLoading(false)
+    alert('تم رفع الصورة بنجاح وتوليد الرابط السحابي!')
+  }
 
-  const handleSendReply = async (originalMessage: any) => {
-    const text = replyText[originalMessage.id];
-    if (!text || !text.trim()) return;
+  // دالة حفظ السيارة بالكامل داخل جدول قاعدة البيانات cars
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!carData.image_url) {
+      alert('يرجى رفع صورة السيارة أولاً قبل الحفظ!')
+      return
+    }
 
-    const receiverId = originalMessage.sender_id === currentUserId 
-      ? originalMessage.receiver_id 
-      : originalMessage.sender_id;
+    setLoading(true)
 
-    const { error } = await supabase.from('messages').insert([
-      {
-        car_id: originalMessage.car_id,
-        sender_id: currentUserId,
-        receiver_id: receiverId,
-        text: text,
-      },
-    ]);
+    // حفظ البيانات مع الحقول التجارية الجديدة
+    const { error } = await supabase
+      .from('cars')
+      .insert([
+        {
+          title: carData.title,
+          price: parseFloat(carData.price),
+          model: carData.model,
+          description: carData.description,
+          image_url: carData.image_url,
+          whatsapp_number: carData.whatsapp_number,
+          seller_type: carData.seller_type,
+          // المعرض يفعل إعلانه فوراً، أما الفرد فينتظر تأكيد دفع الـ 1 دولار
+          is_paid: carData.seller_type === 'dealer' ? true : false 
+        }
+      ])
 
-    if (error) {
-      alert('فشل إرسال الرد: ' + error.message);
+    setLoading(false)
+
+    if (!error) {
+      alert('تم حفظ إعلان السيارة بنجاح في قاعدة البيانات!')
+      // إعادة التوجيه للوحة التحكم الرئيسية لمشاهدة القائمة
+      router.push('/dashboard')
     } else {
-      alert('🎉 تم إرسال ردك بنجاح داخل النظام!');
-      setReplyText({ ...replyText, [originalMessage.id]: '' });
-      window.location.reload();
+      console.error('🚨 خطأ أثناء الحفظ:', error.message)
+      alert('حدث خطأ في السيرفر أثناء الحفظ: ' + error.message)
     }
-  };
-
-  if (loading) return <p className="text-center p-10 font-bold">جاري تحميل صندوق الرسائل الواردة...</p>;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-8 text-right" dir="rtl">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen bg-gray-50 py-12 px-4 md:px-8 text-right" dir="rtl">
+      <div className="max-w-2xl mx-auto bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-gray-100">
         
-        <div className="flex justify-between items-center mb-6">
+        <header className="mb-8 border-b border-gray-100 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">إضافة سيارة جديدة للسوق 🏎️</h1>
+          <p className="text-gray-500 text-sm mt-1">امقأ تفاصيل السيارة بدقة لتظهر للزوار والمشترين.</p>
+        </header>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* عنوان الإعلان */}
           <div>
-            <h1 className="text-2xl font-black text-gray-900">📬 صندوق الرسائل الواردة</h1>
-            <p className="text-xs text-gray-500 mt-1">إدارة المحادثات والعروض السعرية المشفرة والآمنة</p>
+            <label className="block text-sm font-medium text-gray-700 mb-2">اسم السيارة (العنوان)</label>
+            <input type="text" required placeholder="مثال: تويوتا كامري فل كامل" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right" onChange={(e) => setCarData({ ...carData, title: e.target.value })} />
           </div>
-          <a href="/dashboard" className="text-sm text-blue-600 hover:underline">← العودة للوحة التحكم</a>
-        </div>
 
-        <div className="space-y-4">
-          {messages.map((msg) => {
-            const isMySentMessage = msg.sender_id === currentUserId;
-            return (
-              <div key={msg.id} className={`p-5 rounded-2xl border bg-white shadow-sm flex flex-col justify-between transition-all ${
-                isMySentMessage ? 'border-blue-100 bg-blue-50/10' : 'border-gray-100'
-              }`}>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold bg-gray-100 px-2.5 py-1 rounded-lg text-gray-600">
-                      🚗 بخصوص: {msg.cars?.name || 'مركبة محذوفة'}
-                    </span>
-                    <span className="text-[10px] text-gray-400">
-                      {new Date(msg.created_at).toLocaleString('ar-SA')}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className={`w-2 h-2 rounded-full ${isMySentMessage ? 'bg-blue-500' : 'bg-green-500'}`}></span>
-                    <span className="text-xs font-black text-gray-700">
-                      {isMySentMessage ? 'رسالتك المرسلة:' : 'رسالة واردة من مهتم:'}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded-xl border border-gray-100/50 leading-relaxed">
-                    {msg.text}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-50 flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="اكتب ردك السريع هنا للطرف الآخر..."
-                    value={replyText[msg.id] || ''}
-                    onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })}
-                    className="flex-1 border border-gray-200 px-3 py-2 rounded-xl text-sm focus:outline-blue-500 bg-gray-50"
-                  />
-                  <button
-                    onClick={() => handleSendReply(msg)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition shadow-sm"
-                  >
-                    رد فوري ⚡
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          {messages.length === 0 && (
-            <div className="text-center py-16 bg-white rounded-2xl border text-gray-400">
-              <span className="text-4xl block mb-2">📥</span>
-              <p className="text-sm font-semibold">صندوق الوارد فارغ تماماً حالياً.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* السعر */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">السعر (ريال سعودي)</label>
+              <input type="number" required placeholder="مثال: 95000" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-left" dir="ltr" onChange={(e) => setCarData({ ...carData, price: e.target.value })} />
             </div>
-          )}
-        </div>
+            {/* الموديل */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">الموديل (سنة الصنع)</label>
+              <input type="text" required placeholder="مثال: 2026" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right" onChange={(e) => setCarData({ ...carData, model: e.target.value })} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* رقم الواتساب الجديد */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">رقم الواتساب للتواصل</label>
+              <input type="tel" required placeholder="05xxxxxxxx" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-left" dir="ltr" onChange={(e) => setCarData({ ...carData, whatsapp_number: e.target.value })} />
+            </div>
+            {/* نوع الحساب المعلن الجديد */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">نوع المعلن (باقة الحساب)</label>
+              <select className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right font-medium" value={carData.seller_type} onChange={(e) => setCarData({ ...carData, seller_type: e.target.value })}>
+                <option value="individual">حساب فرد عادي (رسوم 1$)</option>
+                <option value="dealer">معرض معتمد / تاجر (نشر فوري مجاني)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* تفاصيل ومواصفات السيارة */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">وصف ومواصفات السيارة</label>
+            <textarea rows={4} required placeholder="اكتب حالة البدي، الممشى، المواصفات الداخلية..." className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right" onChange={(e) => setCarData({ ...carData, description: e.target.value })}></textarea>
+          </div>
+
+          {/* خانة رفع الصورة السحابية */}
+          <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center bg-gray-50">
+            <label className="block text-sm font-medium text-gray-700 mb-2">صورة السيارة الرئيسية</label>
+            <input type="file" accept="image/*" className="mx-auto block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" onChange={handleImageUpload} disabled={loading} />
+            {carData.image_url && (
+              <p className="text-green-600 text-xs mt-3 font-medium">✓ تم رفع وتجهيز الصورة بنجاح في السيرفر السحابي!</p>
+            )}
+          </div>
+
+          {/* زر الحفظ النهائي */}
+          <button type="submit" disabled={loading} className="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl hover:bg-blue-600 transition disabled:bg-gray-400">
+            {loading ? 'جاري معالجة البيانات والرفع...' : 'نشر إعلان السيارة في السوق ←'}
+          </button>
+        </form>
 
       </div>
-    </div>
-  );
+    </main>
+  )
 }
+
 
