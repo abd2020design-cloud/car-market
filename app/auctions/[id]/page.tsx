@@ -1,26 +1,22 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/supabaseClient'
 
-export default function AuctionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  // 🌟 استخدام دالة use لتفكيك الرابط فوراً ومنع التعليق في السيرفر الحي
-  const resolvedParams = use(params)
-  const auctionIdStr = resolvedParams?.id
-
+export default function AuctionDetailPage({ params }: { params: { id: string } }) {
   const [auction, setAuction] = useState<any>(null)
   const [bids, setBids] = useState<any[]>([])
   const [userBid, setUserBid] = useState('')
   const [timeLeft, setTimeLeft] = useState('جاري حساب الوقت...')
 
   useEffect(() => {
-    // إذا كان رقم المزاد غير معرف أو مفقود في الرابط، نضع البيانات الاحتياطية فوراً لتشغيل العداد غصباً عن أي تعليق!
-    if (!auctionIdStr || auctionIdStr === 'undefined') {
+    // خطة إنقاذ فورية: إذا لم يستطع المتصفح قراءة الرابط في أول أجزاء من الثانية
+    if (!params || !params.id || params.id === 'undefined') {
       loadFallbackData()
       return
     }
 
-    const auctionId = parseInt(auctionIdStr, 10)
+    const auctionId = parseInt(params.id, 10)
     if (isNaN(auctionId)) {
       loadFallbackData()
       return
@@ -44,7 +40,7 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
         setAuction(currentAuction)
         startCountdown(currentAuction.end_time || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString())
 
-        // جلب سجل السومات وترتيبها علناً
+        // جلب سجل السومات العلني
         const { data: bidData } = await supabase
           .from('bid_history')
           .select('*')
@@ -53,17 +49,17 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
         setBids(bidData || [])
 
       } catch (err: any) {
-        console.error("🚨 خطأ سوبابيز:", err.message)
+        console.error("🚨 خطأ في الاتصال بالخادم السحابي:", err.message)
         loadFallbackData()
       }
     }
 
     fetchAuctionData()
 
-    // الاشتراك في الوقت الفعلي Realtime
+    // الاشتراك في ميزة الوقت الفعلي (Realtime) لتحديث الشاشات حياً
     const channel = supabase
       .channel('live-bids')
-      .on('postgres_changes', { event: 'INSERT', table: 'bid_history', filter: `auction_id=eq.${auctionIdStr}` }, 
+      .on('postgres_changes', { event: 'INSERT', table: 'bid_history', filter: `auction_id=eq.${params.id}` }, 
       (payload) => {
         setBids((prev) => [payload.new, ...prev])
         setAuction((prev: any) => ({ ...prev, current_highest_bid: payload.new.bid_amount }))
@@ -71,9 +67,9 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [auctionIdStr])
+  }, [params?.id])
 
-  // دالة تشغيل البيانات الاحتياطية الذكية لإنقاذ الصفحة وتشغيل العداد فوراً
+  // دالة تشغيل البيانات الاحتياطية لضمان بقاء العداد حياً في جميع الشاشات
   const loadFallbackData = () => {
     setAuction({
       id: 1,
@@ -88,7 +84,7 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
     startCountdown(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString())
   }
 
-  // دالة تشغيل العداد التنازلي الحي بالثواني
+  // دالة العداد التنازلي المتحرك بالثواني
   const startCountdown = (endTimeStr: string) => {
     const timer = setInterval(() => {
       const difference = +new Date(endTimeStr) - +new Date()
@@ -117,22 +113,26 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
       return
     }
 
-    // محاكاة فورية حية للسوم في الشاشة للجمال والتفاعل
+    // محاكاة فورية حية للسوم في الشاشة للجمال والتفاعل أمام الزائر
     setBids((prev) => [{ id: Math.random(), bid_amount: bidNumber }, ...prev])
     setAuction((prev: any) => ({ ...prev, current_highest_bid: bidNumber }))
     setUserBid('')
     
-    // محاولة الحفظ في الخلفية بقاعدة البيانات
+    // حفظ السومة في الخلفية بقاعدة البيانات
     await supabase.from('bid_history').insert([{ auction_id: auction.id, bid_amount: bidNumber }])
   }
+
+  if (!auction) return <p className="text-center py-12">جاري تحميل بيانات المزاد الفوري...</p>
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4 text-right" dir="rtl">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         
+        {/* تفاصيل المزاد والسيارة */}
         <div className="md:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
           <img src={auction.cars?.image_url || '/placeholder-news.jpg'} alt={auction.cars?.title} className="w-full h-64 object-cover rounded-2xl mb-6" />
           
+          {/* عداد الوقت الحي المتحرك بالثواني */}
           <div className="bg-red-50 text-red-700 border border-red-100 rounded-xl py-2 px-4 inline-block font-bold text-sm mb-4">
             {timeLeft}
           </div>
@@ -140,6 +140,7 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{auction.cars?.title}</h1>
           <p className="text-gray-500 mb-6">{auction.cars?.description}</p>
           
+          {/* شاشة السعر الحالي العلني */}
           <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center grid grid-cols-2 gap-4">
             <div>
               <span className="text-xs text-gray-400 block mb-1">السعر الافتتاحي</span>
@@ -151,6 +152,7 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
+          {/* نموذج السوم العلني */}
           <form onSubmit={handlePlaceBid} className="mt-8 flex gap-4">
             <input 
               type="number" 
@@ -167,6 +169,7 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
           </form>
         </div>
 
+        {/* لوحة سجل السومات الحية للزوار */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">📋 سجل المزايدة الحي</h2>
@@ -190,6 +193,7 @@ export default function AuctionDetailPage({ params }: { params: Promise<{ id: st
     </main>
   )
 }
+
 
 
 
