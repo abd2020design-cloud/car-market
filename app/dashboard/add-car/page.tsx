@@ -124,7 +124,7 @@ export default function AddCarPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">نوع المعلن (باقة الحساب)</label>
               <select className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right font-medium" value={carData.seller_type} onChange={(e) => setCarData({ ...carData, seller_type: e.target.value })}>
-                <option value="individual">حساب فرد عادي (رسوم 1$)</option>
+                <option value="individual">حساب فرد عادي (رسوم 10R)</option>
                 <option value="dealer">معرض معتمد / تاجر (نشر فوري مجاني)</option>
               </select>
             </div>
