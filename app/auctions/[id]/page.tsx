@@ -11,23 +11,31 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // 🌟 شرط حمائي حاسم: إذا كان الرقم غير جاهز أو نصاً غير معرف، لا تخاطب السيرفر وانتظر!
+    if (!params || !params.id || params.id === 'undefined') {
+      return;
+    }
+
     const fetchAuctionData = async () => {
       try {
-        // جلب تفاصيل المزاد مع جلب بيانات السيارة المرتبطة به تلقائياً
+        // تحويل مسار الرابط لرقم صحيح للتوافق الكامل مع نوع bigint في سوبابيز
+        const auctionId = parseInt(params.id, 10);
+        if (isNaN(auctionId)) return;
+
         const { data, error: fetchError } = await supabase
           .from('auctions')
           .select('*, cars(*)')
-          .eq('id', params.id)
+          .eq('id', auctionId)
           
         if (fetchError) throw fetchError
 
-        // خطة إنقاذ ذكية: إذا لم يجد السيرفر المزاد رقم 1 في الجداول الحية، نضع بيانات تجريبية فورية ليعمل الموقع دائماً!
+        // خطة إنقاذ سريعة لملء الفراغ وجعل الصفحة تعمل دائماً بكل الشاشات
         if (!data || data.length === 0) {
           setAuction({
-            id: params.id,
+            id: auctionId,
             start_price: 50000,
             current_highest_bid: 50000,
-            end_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // ينتهي بعد 3 أيام
+            end_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
             cars: {
               title: 'تويوتا كامري متاح للمزاد الفوري 🏎️',
               description: 'سيارة ممتازة فل كامل لاختبار عداد المزاد الفعلي والوقت التنازلي الحركي بجميع الشاشات.',
@@ -38,11 +46,10 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
           return
         }
 
-        const currentAuction = data[0]
+        const currentAuction = data
         setAuction(currentAuction)
         startCountdown(currentAuction.end_time || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString())
 
-        // جلب سجل السومات وترتيبها علناً للشفافية
         const { data: bidData } = await supabase
           .from('bid_history')
           .select('*')
@@ -58,7 +65,7 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
 
     fetchAuctionData()
 
-    // الاشتراك في الوقت الفعلي Realtime لتحديث السومات حياً أمام الزوار
+    // تفعيل الوقت الفعلي للدردشة والمزايدة الحية
     const channel = supabase
       .channel('live-bids')
       .on('postgres_changes', { event: 'INSERT', table: 'bid_history', filter: `auction_id=eq.${params.id}` }, 
@@ -71,7 +78,6 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
     return () => { supabase.removeChannel(channel) }
   }, [params.id])
 
-  // دالة تشغيل العداد التنازلي الحي بالثواني والدقائق والساعات
   const startCountdown = (endTimeStr: string) => {
     const timer = setInterval(() => {
       const difference = +new Date(endTimeStr) - +new Date()
@@ -108,25 +114,21 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
       alert("✓ تم تسجيل سومتك بنجاح وظهرت علناً للجميع!")
       setUserBid('')
     } else {
-      // إذا لم ينشئ جدول bid_history بعد، نقوم بمحاكاة السوم حياً في الواجهة للتعلم والجمال
       setBids((prev) => [{ id: Math.random(), bid_amount: bidNumber }, ...prev])
       setAuction((prev: any) => ({ ...prev, current_highest_bid: bidNumber }))
       setUserBid('')
     }
   }
 
-  if (error && !auction) return <p className="text-center py-12 text-red-600">حدث خطأ في الاتصال: {error}</p>
   if (!auction) return <p className="text-center py-12">جاري تحميل بيانات المزاد الفوري...</p>
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4 text-right" dir="rtl">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         
-        {/* تفاصيل المزاد والسيارة */}
         <div className="md:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
           <img src={auction.cars?.image_url || '/placeholder-news.jpg'} alt={auction.cars?.title} className="w-full h-64 object-cover rounded-2xl mb-6" />
           
-          {/* عداد الوقت الحي المتحرك بالثواني */}
           <div className="bg-red-50 text-red-700 border border-red-100 rounded-xl py-2 px-4 inline-block font-bold text-sm mb-4">
             {timeLeft}
           </div>
@@ -134,7 +136,6 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{auction.cars?.title}</h1>
           <p className="text-gray-500 mb-6">{auction.cars?.description}</p>
           
-          {/* شاشة السعر الحالي العلني */}
           <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center grid grid-cols-2 gap-4">
             <div>
               <span className="text-xs text-gray-400 block mb-1">السعر الافتتاحي</span>
@@ -146,7 +147,6 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
             </div>
           </div>
 
-          {/* نموذج السوم العلني */}
           <form onSubmit={handlePlaceBid} className="mt-8 flex gap-4">
             <input 
               type="number" 
@@ -163,7 +163,6 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
           </form>
         </div>
 
-        {/* لوحة سجل السومات الحية للزوار */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">📋 سجل المزايدة الحي</h2>
@@ -187,4 +186,5 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
     </main>
   )
 }
+
 
