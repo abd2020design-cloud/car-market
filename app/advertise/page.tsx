@@ -126,7 +126,7 @@ export default function AdvertisePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">الباقة المطلوبة</label>
                   <select className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right" value={formData.package_type} onChange={(e)=> setFormData({...formData, package_type: e.target.value})}>
                     <option value="not_specified">اختر الباقة...</option>
-                    <option value="individual">باقة الأفراد العادية (100ريال)</option>
+                    <option value="individual">باقة الأفراد لمده محدوده (10ريال)</option>
                     <option value="dealer">باقة المعارض والتجار</option>
                     <option value="banner">إعلانات البانر المساحية</option>
                   </select>
