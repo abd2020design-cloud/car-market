@@ -31,16 +31,21 @@ export default function RootLayout({
         <nav className="bg-white border-b border-gray-150 sticky top-0 z-50 text-right shadow-sm">
           <div className="max-w-6xl mx-auto px-4 md:px-8 flex justify-between items-center h-20">
             
-            {/* 🌟 مكان الشعار والأيقونة المعاد تثبيته وحمايته */}
+            {/* 🌟 إعادة أيقونة البراند (1B داخل المربع) بدقة فائقة */}
             <div className="flex items-center">
-              <Link href="/" className="text-xl font-black text-gray-900 flex items-center gap-2 hover:text-blue-600 transition">
-                {/* إذا كان لديك ملف لوجو حقيقي، يمكنك تفعيل السطر أدناه بمسح علامات التعليق */}
-                {/* <img src="/logo.png" alt="اللوجو" className="h-10 w-auto object-contain" /> */}
+              <Link href="/" className="text-xl font-black text-gray-900 flex items-center gap-3 hover:opacity-90 transition">
                 
-                {/* الأيقونة والنص البرمجي الثابت لحين رغبتك بوضع الصورة */}
-                <span className="text-2xl">🏎️</span> 
-                <span>سوق الألف مليون</span>
-                <span className="text-blue-600">للسيارات</span>
+                {/* المربع الأسود الاحترافي وبداخله شعار البراند 1B باللون الأبيض */}
+                <div className="bg-gray-950 text-white font-black text-lg w-10 h-10 rounded-xl flex items-center justify-center tracking-tighter shadow-sm border border-gray-800">
+                  1B
+                </div>
+                
+                {/* اسم الموقع بجانب الأيقونة */}
+                <div className="flex items-center gap-1">
+                  <span>سوق الألف مليون</span>
+                  <span className="text-blue-600">للسيارات</span>🏎️
+                </div>
+
               </Link>
             </div>
 
