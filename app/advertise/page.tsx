@@ -40,9 +40,9 @@ export default function AdvertisePage() {
       <div className="max-w-5xl mx-auto">
         
         <header className="text-center mb-16">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">أعلن معنا في سوق الألف مليون 🚀</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">أعلن معنا في ون بي سوق الألف مليون سياره 🚀</h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            وصل إعلانات سياراتك ومعرضك لآلاف المشترين الجادين يومياً في أكبر منصة متخصصة.
+            وصل إعلانات سياراتك ومعرضك لآلاف المشترين الجادين يومياً في أكبر منصة للسيارات(يجب ان تكون مخولا نظاميا بالاعلان).
           </p>
         </header>
 
@@ -50,7 +50,7 @@ export default function AdvertisePage() {
           {/* باقة الأفراد */}
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
             <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">باقة الأفراد العادية</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">باقة الأفراد العاديه</h3>
               <p className="text-gray-500 text-sm mb-6">مخصصة لبيع سيارة شخصية واحدة بسرعة.</p>
               <div className="text-3xl font-extrabold text-gray-950 mb-6">100 ريال <span className="text-sm font-normal text-gray-500">/ للإعلان</span></div>
               <ul className="text-gray-600 text-sm space-y-3 mb-8">
