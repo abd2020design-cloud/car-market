@@ -104,7 +104,7 @@ export default function HomePage() {
         {/* 🎯 قسم الرؤية والهدف الملهم */}
         <section className="text-center mb-10 max-w-2xl mx-auto space-y-3">
           <h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">
-            مرحباً بك في <span className="text-blue-600">سوق الألف مليون للسيارات</span>
+            مرحباً بك في <span className="text-blue-600">ون بي سوق الألف مليون سيارة</span>
           </h2>
           <p className="text-gray-600 font-bold text-base md:text-lg bg-blue-50/50 border border-blue-100/50 py-3 px-6 rounded-2xl inline-block shadow-sm">
             ✨ "ليس مجرد اسم، بل هو هدف سنحققه بإذن الله"
