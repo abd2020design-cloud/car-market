@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from 'next/link'; // استدعاء مكون الانتقال السريع
+import Link from 'next/link';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "سوق الألف مليون للسيارات 🏎️",
-  description: "أكبر منصة متخصصة لبيع السيارات والمزادات العلنية الفورية بـ السوم الحي والمباشر.",
+  description: "أكبر منصة إقليمية لتصفح وشراء السيارات والمزادات العلنية الفورية بالسوم الحي والمباشر.",
 };
 
 export default function RootLayout({
@@ -27,23 +27,28 @@ export default function RootLayout({
     <html lang="ar" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} dir="rtl">
       <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
         
-        {/* 🌟 القائمة العلوية العالمية الموحدة لجميع صفحات الموقع */}
+        {/* القائمة العلوية العالمية الموحدة لشاشات الموقع بأكمله */}
         <nav className="bg-white border-b border-gray-150 sticky top-0 z-50 text-right shadow-sm">
           <div className="max-w-6xl mx-auto px-4 md:px-8 flex justify-between items-center h-20">
             
-            {/* الشعار المتميز للموقع */}
+            {/* 🌟 مكان الشعار والأيقونة المعاد تثبيته وحمايته */}
             <div className="flex items-center">
-              <Link href="/" className="text-xl font-black text-gray-900 flex items-center gap-1.5 hover:text-blue-650 transition">
+              <Link href="/" className="text-xl font-black text-gray-900 flex items-center gap-2 hover:text-blue-600 transition">
+                {/* إذا كان لديك ملف لوجو حقيقي، يمكنك تفعيل السطر أدناه بمسح علامات التعليق */}
+                {/* <img src="/logo.png" alt="اللوجو" className="h-10 w-auto object-contain" /> */}
+                
+                {/* الأيقونة والنص البرمجي الثابت لحين رغبتك بوضع الصورة */}
+                <span className="text-2xl">🏎️</span> 
                 <span>سوق الألف مليون</span>
-                <span className="text-blue-600">للسيارات</span>🏎️
+                <span className="text-blue-600">للسيارات</span>
               </Link>
             </div>
 
             {/* روابط التنقل الرئيسية الموحدة شاملة قسم المزادات الحية */}
             <div className="hidden md:flex items-center gap-6 font-semibold text-sm">
               <Link href="/" className="text-gray-600 hover:text-blue-600 transition">🏠 الرئيسية</Link>
-              <Link href="/blog" className="text-gray-600 hover:text-blue-600 transition">🚗 سوق السيارات</Link>
-              <Link href="/auctions" className="text-blue-600 font-bold border-b-2 border-blue-600 pb-1">🔨 المزادات الحية</Link> {/* الزر السحري الجديد */}
+              <Link href="/blog" className="text-gray-600 hover:text-blue-600 transition">📰 أخبار السيارات</Link>
+              <Link href="/auctions" className="text-gray-600 hover:text-blue-600 transition">🔨 المزادات الحية</Link>
               <Link href="/advertise" className="text-gray-600 hover:text-blue-600 transition">🚀 أعلن معنا</Link>
               <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition">⚙️ لوحة التحكم</Link>
             </div>
@@ -67,4 +72,5 @@ export default function RootLayout({
     </html>
   );
 }
+
 
