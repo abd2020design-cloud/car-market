@@ -24,7 +24,6 @@ export default function HomePage() {
       setLoading(true)
       let query = supabase.from('cars').select('*')
 
-      // إذا اختار الزائر دولة معينة، نجبر السيرفر على جلب سيارات هذه الدولة فقط
       if (selectedCountry !== 'ALL') {
         query = query.eq('country', selectedCountry)
       }
@@ -35,21 +34,21 @@ export default function HomePage() {
     }
 
     fetchCars()
-  }, [selectedCountry]) // إعادة الجلب حياً فور تدوير علم الدولة!
+  }, [selectedCountry])
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4 md:px-8 text-right" dir="rtl">
       <div className="max-w-6xl mx-auto">
         
-        {/* رأس السوق الرئيسي */}
+        {/* رأس السوق الرئيسي المطور */}
         <header className="mb-12 border-b border-gray-200 pb-6">
           <h1 className="text-4xl font-black text-gray-900 mb-2">سوق الألف مليون للسيارات 🏎️</h1>
-          <p className="text-gray-600 text-lg">أكبر منصة إقليمية لتصفح وشراء السيارات الحية والمزادات في الخليج ومصر.</p>
+          <p className="text-gray-600 text-lg">أكبر منصة إقليمية لتصفح وشراء السيارات والمزادات العلنية الفورية بالسوم الحي والمباشر.</p>
         </header>
 
         {/* 🌟 شريط اختيار وتصفية الدول الذكي (Country Filter) */}
         <section className="mb-8 bg-white p-5 rounded-2xl shadow-sm border border-gray-150">
-          <h3 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">اختر الدولة لتصفح السيارات المتاحة</h3>
+          <h3 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">اختر الدولة لتصفح السيارات والمزادات المتاحة</h3>
           <div className="flex flex-wrap gap-3">
             {countries.map((c) => (
               <button
@@ -69,7 +68,6 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {cars.map((car: any) => {
-              // تحديد اسم العملة ديناميكياً بناءً على العملة المخزنة للسيارة
               const carCurrency = car.currency || 'ريال'
               
               return (
@@ -78,7 +76,6 @@ export default function HomePage() {
                     <img src={car.image_url || '/placeholder-news.jpg'} className="w-full h-48 object-cover" alt={car.title} />
                     
                     <div className="p-5">
-                      {/* شارة الدولة المرفوع منها الإعلان */}
                       <span className="text-xs text-blue-700 font-bold bg-blue-50 px-2.5 py-1 rounded-full">
                         {car.country === 'EG' ? '🇪🇬 مصر' : car.country === 'AE' ? '🇦🇪 الإمارات' : car.country === 'QA' ? '🇶🇦 قطر' : '🇸🇦 السعودية'}
                       </span>
@@ -94,9 +91,8 @@ export default function HomePage() {
                   </div>
 
                   <div className="p-5 pt-0">
-                    {/* زر تقديم طلب شراء داخلي ومحمي لضمان عمولتك العادية */}
                     <Link href={`/dashboard/inbox?action=buy&carId=${car.id}`} className="block text-center w-full bg-gray-900 text-white font-medium py-2.5 rounded-xl hover:bg-blue-600 transition duration-200">
-                      تقديم عرض شراء / معاينة ←
+                      تقديم عرض شراء / معاينة للوساطة ←
                     </Link>
                   </div>
                 </article>
@@ -105,7 +101,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* في حال كانت دولة معينة فارغة من السيارات حالياً */}
+        {/* في حال خلو الدولة من البيانات */}
         {cars.length === 0 && !loading && (
           <div className="bg-yellow-50 text-yellow-850 p-8 rounded-2xl text-center max-w-md mx-auto mt-12 border border-yellow-100">
             📥 لا توجد سيارات معروضة في هذه الدولة حالياً. كن أول من يرفع سيارة وافتح سوق بلدك الآن!
@@ -116,6 +112,7 @@ export default function HomePage() {
     </main>
   )
 }
+
 
 
 
