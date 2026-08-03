@@ -2,21 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/supabaseClient'
-import Link from 'next/link'
+import Link from 'next/navigation'
 
 export default function HomePage() {
   const [cars, setCars] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedCountry, setSelectedCountry] = useState('ALL') // الدولة المختارة للفلترة
+  const [selectedCountry, setSelectedCountry] = useState('ALL')
 
-  // قائمة الدول المدعومة في سوق الألف مليون الإقليمي
+  // قائمة الدول المدعومة بروابط صور أعلام حقيقية وعالية الدقة (SVG) لضمان ظهورها بكل مكان
   const countries = [
-    { code: 'ALL', name: '🌍 كل الدول', currency: '' },
-    { code: 'SA', name: '🇸🇦 السعودية', currency: 'ريال' },
-    { code: 'EG', name: '🇪🇬 مصر', currency: 'جنيه' },
-    { code: 'AE', name: '🇦🇪 الإمارات', currency: 'درهم' },
-    { code: 'QA', name: '🇶🇦 قطر', currency: 'ريال' },
-    { code: 'KW', name: '🇰🇼 الكويت', currency: 'دينار' },
+    { code: 'ALL', name: '🌍 كل الدول', flagUrl: '' },
+    { code: 'SA', name: 'المملكة العربية السعودية', flagUrl: 'https://flagcdn.com' },
+    { code: 'EG', name: 'جمهورية مصر العربية', flagUrl: 'https://flagcdn.com' },
+    { code: 'AE', name: 'الإمارات العربية المتحدة', flagUrl: 'https://flagcdn.com' },
+    { code: 'QA', name: 'دولة قطر', flagUrl: 'https://flagcdn.com' },
+    { code: 'KW', name: 'دولة الكويت', flagUrl: 'https://flagcdn.com' },
   ]
 
   useEffect(() => {
@@ -40,23 +40,26 @@ export default function HomePage() {
     <main className="min-h-screen bg-gray-50 py-12 px-4 md:px-8 text-right" dir="rtl">
       <div className="max-w-6xl mx-auto">
         
-        {/* رأس السوق الرئيسي المطور */}
+        {/* رأس السوق الرئيسي */}
         <header className="mb-12 border-b border-gray-200 pb-6">
           <h1 className="text-4xl font-black text-gray-900 mb-2">سوق الألف مليون للسيارات 🏎️</h1>
           <p className="text-gray-600 text-lg">أكبر منصة إقليمية لتصفح وشراء السيارات والمزادات العلنية الفورية بالسوم الحي والمباشر.</p>
         </header>
 
-        {/* 🌟 شريط اختيار وتصفية الدول الذكي (Country Filter) */}
+        {/* 🌟 شريط اختيار الدول المطور بصور الأعلام الحقيقية الملونة */}
         <section className="mb-8 bg-white p-5 rounded-2xl shadow-sm border border-gray-150">
-          <h3 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">اختر الدولة لتصفح السيارات والمزادات المتاحة</h3>
+          <h3 className="text-xs font-bold text-gray-400 mb-4 uppercase tracking-wider">اختر الدولة لتصفح السيارات والمزادات المتاحة</h3>
           <div className="flex flex-wrap gap-3">
             {countries.map((c) => (
               <button
                 key={c.code}
                 onClick={() => setSelectedCountry(c.code)}
-                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition duration-200 ${selectedCountry === c.code ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                className={`px-4 py-2.5 rounded-xl font-bold text-sm transition duration-200 flex items-center gap-2.5 ${selectedCountry === c.code ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
               >
-                {c.name}
+                {c.flagUrl && (
+                  <img src={c.flagUrl} alt={c.name} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
+                )}
+                <span>{c.name}</span>
               </button>
             ))}
           </div>
@@ -69,15 +72,20 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {cars.map((car: any) => {
               const carCurrency = car.currency || 'ريال'
-              
+              // تحديد رابط علم كرت السيارة بناءً على حقل الدولة المخزن
+              const carFlag = car.country === 'EG' ? 'https://flagcdn.com' : car.country === 'AE' ? 'https://flagcdn.com' : car.country === 'QA' ? 'https://flagcdn.com' : car.country === 'KW' ? 'https://flagcdn.com' : 'https://flagcdn.com';
+              const carCountryName = car.country === 'EG' ? 'مصر' : car.country === 'AE' ? 'الإمارات' : car.country === 'QA' ? 'قطر' : car.country === 'KW' ? 'الكويت' : 'السعودية';
+
               return (
                 <article key={car.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col justify-between hover:shadow-md transition duration-300">
                   <div>
                     <img src={car.image_url || '/placeholder-news.jpg'} className="w-full h-48 object-cover" alt={car.title} />
                     
                     <div className="p-5">
-                      <span className="text-xs text-blue-700 font-bold bg-blue-50 px-2.5 py-1 rounded-full">
-                        {car.country === 'EG' ? '🇪🇬 مصر' : car.country === 'AE' ? '🇦🇪 الإمارات' : car.country === 'QA' ? '🇶🇦 قطر' : '🇸🇦 السعودية'}
+                      {/* شارة الدولة الملونة الحقيقية المرفوع منها الإعلان */}
+                      <span className="inline-flex items-center gap-1.5 text-xs text-blue-700 font-bold bg-blue-50 px-2.5 py-1 rounded-full">
+                        <img src={carFlag} className="w-4 h-2.5 object-cover rounded-sm" alt="" />
+                        <span>{carCountryName}</span>
                       </span>
                       
                       <h2 className="text-xl font-bold text-gray-900 mt-3 mb-2">{car.title}</h2>
