@@ -52,7 +52,7 @@ export default function AdvertisePage() {
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">باقة الأفراد العادية</h3>
               <p className="text-gray-500 text-sm mb-6">مخصصة لبيع سيارة شخصية واحدة بسرعة.</p>
-              <div className="text-3xl font-extrabold text-gray-950 mb-6">1 دولار <span className="text-sm font-normal text-gray-500">/ للإعلان</span></div>
+              <div className="text-3xl font-extrabold text-gray-950 mb-6">10 ريال <span className="text-sm font-normal text-gray-500">/ للإعلان</span></div>
               <ul className="text-gray-600 text-sm space-y-3 mb-8">
                 <li>✓ ظهور الإعلان لمدة 30 يوم</li>
                 <li>✓ تواصل مباشر عبر الواتساب</li>
