@@ -1,191 +1,165 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { supabase } from '@/supabaseClient'
+import Link from 'next/link'
 
-export default function AuctionDetailPage({ params }: { params: { id: string } }) {
+export default function AuctionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [auction, setAuction] = useState<any>(null)
   const [bids, setBids] = useState<any[]>([])
-  const [userBid, setUserBid] = useState('')
-  const [timeLeft, setTimeLeft] = useState('جاري حساب الوقت...')
+  const [bidAmount, setBidAmount] = useState('')
+  const [countdown, setCountdown] = useState('جاري حساب الوقت...')
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // خطة إنقاذ فورية: إذا لم يستطع المتصفح قراءة الرابط في أول أجزاء من الثانية
-    if (!params || !params.id || params.id === 'undefined') {
-      loadFallbackData()
-      return
-    }
+  const fetchAuctionDetails = async () => {
+    try {
+      // 🌟 استخدام single لضمان جلب كائن فريد متوافق 100% مع معايير الـ TypeScript
+      const { data, error } = await supabase
+        .from('auctions')
+        .select('*, cars(*)')
+        .eq('id', id)
+        .single()
 
-    const auctionId = parseInt(params.id, 10)
-    if (isNaN(auctionId)) {
-      loadFallbackData()
-      return
-    }
+      if (!error && data) {
+        setAuction(data)
+        
+        // تشغيل العداد التنازلي حياً للمزاد
+        const end = new Date(data.end_time).getTime()
+        const timer = setInterval(() => {
+          const now = new Date().getTime()
+          const distance = end - now
 
-    const fetchAuctionData = async () => {
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('auctions')
-          .select('*, cars(*)')
-          .eq('id', auctionId)
-          
-        if (fetchError) throw fetchError
+          if (distance < 0) {
+            clearInterval(timer)
+            setCountdown('🔨 المزاد منتهي مغلق')
+          } else {
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24))
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000)
+            setCountdown(`${days} يوم و ${hours} ساعة و ${minutes} دقيقة و ${seconds} ثانية`)
+          }
+        }, 1000)
 
-        if (!data || data.length === 0) {
-          loadFallbackData()
-          return
-        }
-
-        const currentAuction = data
-        setAuction(currentAuction)
-        startCountdown(currentAuction.end_time || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString())
-
-        // جلب سجل السومات العلني
+        // جلب سجل السومات الفعلي حياً
         const { data: bidData } = await supabase
           .from('bid_history')
           .select('*')
-          .eq('auction_id', currentAuction.id)
+          .eq('auction_id', id)
           .order('bid_amount', { ascending: false })
+
         setBids(bidData || [])
-
-      } catch (err: any) {
-        console.error("🚨 خطأ في الاتصال بالخادم السحابي:", err.message)
-        loadFallbackData()
       }
+    } catch (err) {
+      console.error(err)
     }
-
-    fetchAuctionData()
-
-    // الاشتراك في ميزة الوقت الفعلي (Realtime) لتحديث الشاشات حياً
-    const channel = supabase
-      .channel('live-bids')
-      .on('postgres_changes', { event: 'INSERT', table: 'bid_history', filter: `auction_id=eq.${params.id}` }, 
-      (payload) => {
-        setBids((prev) => [payload.new, ...prev])
-        setAuction((prev: any) => ({ ...prev, current_highest_bid: payload.new.bid_amount }))
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [params?.id])
-
-  // دالة تشغيل البيانات الاحتياطية لضمان بقاء العداد حياً في جميع الشاشات
-  const loadFallbackData = () => {
-    setAuction({
-      id: 1,
-      start_price: 50000,
-      current_highest_bid: 50000,
-      cars: {
-        title: 'تويوتا كامري متاح للمزاد الفوري 🏎️',
-        description: 'سيارة تجريبية ممتازة فل كامل لاختبار عداد المزاد الفعلي والوقت التنازلي الحركي بجميع الشاشات.',
-        image_url: '/placeholder-news.jpg'
-      }
-    })
-    startCountdown(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString())
+    setLoading(false)
   }
 
-  // دالة العداد التنازلي المتحرك بالثواني
-  const startCountdown = (endTimeStr: string) => {
-    const timer = setInterval(() => {
-      const difference = +new Date(endTimeStr) - +new Date()
-      if (difference <= 0) {
-        setTimeLeft('🚨 المزاد مغلق ومنتهي!')
-        clearInterval(timer)
-        return
-      }
-
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24)
-      const minutes = Math.floor((difference / 1000 / 60) % 60)
-      const seconds = Math.floor((difference / 1000) % 60)
-
-      setTimeLeft(`⏳ متبقي: ${days} يوم و ${hours} ساعة و ${minutes} دقيقة و ${seconds} ثانية`)
-    }, 1000)
-  }
+  useEffect(() => {
+    fetchAuctionDetails()
+  }, [id])
 
   const handlePlaceBid = async (e: React.FormEvent) => {
     e.preventDefault()
-    const bidNumber = parseFloat(userBid)
-    const basePrice = auction?.current_highest_bid || auction?.start_price || 50000
+    if (!bidAmount || !auction) return
 
-    if (bidNumber <= basePrice) {
-      alert("يجب أن تكون سومتك أعلى من السوم الحالي للمزاد!")
+    const newBid = parseFloat(bidAmount)
+    if (newBid <= auction.current_highest_bid) {
+      alert(`⚠️ يجب أن تكون السومة الجديدة أعلى من السوم الحالي الحالي: ${auction.current_highest_bid} ريال!`)
       return
     }
 
-    // محاكاة فورية حية للسوم في الشاشة للجمال والتفاعل أمام الزائر
-    setBids((prev) => [{ id: Math.random(), bid_amount: bidNumber }, ...prev])
-    setAuction((prev: any) => ({ ...prev, current_highest_bid: bidNumber }))
-    setUserBid('')
-    
-    // حفظ السومة في الخلفية بقاعدة البيانات
-    await supabase.from('bid_history').insert([{ auction_id: auction.id, bid_amount: bidNumber }])
+    setLoading(true)
+
+    // حقن السومة الجديدة في سجل مكافحة الاحتيال الرقمي
+    const { error: insertError } = await supabase
+      .from('bid_history')
+      .insert([{ auction_id: id, bid_amount: newBid }])
+
+    if (!insertError) {
+      // تحديث السعر الحالي للمزاد تلقائياً
+      await supabase.from('auctions').update({ current_highest_bid: newBid }).eq('id', id)
+      alert('🚀 نجاح! تم تسجيل سومتك الحية والمباشرة بنجاح في الرادار.')
+      setBidAmount('')
+      fetchAuctionDetails()
+    } else {
+      alert('فشل تسجيل السومة: ' + insertError.message)
+      setLoading(false)
+    }
   }
 
-  if (!auction) return <p className="text-center py-12">جاري تحميل بيانات المزاد الفوري...</p>
+  if (loading) return <p className="text-center py-12 text-gray-500">جاري تحميل غرفة المزاد العلني الفوري حياً...</p>
+  if (!auction) return <p className="text-center py-12 text-red-500">🚨 خطأ أمني: لم نجد هذا المزاد في السيرفر السحابي.</p>
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12 px-4 text-right" dir="rtl">
+    <main className="min-h-screen bg-gray-50 py-12 px-4 md:px-8 text-right" dir="rtl">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         
-        {/* تفاصيل المزاد والسيارة */}
-        <div className="md:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-          <img src={auction.cars?.image_url || '/placeholder-news.jpg'} alt={auction.cars?.title} className="w-full h-64 object-cover rounded-2xl mb-6" />
-          
-          {/* عداد الوقت الحي المتحرك بالثواني */}
-          <div className="bg-red-50 text-red-700 border border-red-100 rounded-xl py-2 px-4 inline-block font-bold text-sm mb-4">
-            {timeLeft}
+        {/* ساحة تفاصيل المركبة والمزايدة */}
+        <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+          <header>
+            <span className="bg-red-50 text-red-600 font-bold px-2.5 py-1 rounded-full text-xs uppercase tracking-wider animate-pulse">🔨 مزاد علني فوري حي</span>
+            <h1 className="text-2xl font-black text-gray-900 mt-3">{auction.cars?.title || 'تويوتا كامري'}</h1>
+            <p className="text-gray-500 text-xs mt-1">الموديل والسنة: {auction.cars?.model || '2025'}</p>
+          </header>
+
+          <div className="bg-red-50/50 border border-red-100 p-4 rounded-2xl flex justify-between items-center font-bold text-sm text-red-800">
+            <span>⏳ العداد التنازلي لإغلاق المزاد:</span>
+            <span className="font-mono text-base tracking-tight">{countdown}</span>
           </div>
 
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{auction.cars?.title}</h1>
-          <p className="text-gray-500 mb-6">{auction.cars?.description}</p>
-          
-          {/* شاشة السعر الحالي العلني */}
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold text-gray-400 uppercase">وصف ومواصفات حالة المركبة</h3>
+            <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-150">{auction.cars?.description || 'مواصفات ممتازة.'}</p>
+          </div>
+
+          {/* استمارة السوم الحركي */}
+          <form onSubmit={handlePlaceBid} className="border-t pt-4 space-y-4">
             <div>
-              <span className="text-xs text-gray-400 block mb-1">السعر الافتتاحي</span>
-              <span className="text-xl font-bold text-gray-700">{auction.start_price || 50000} ريال</span>
+              <label className="block text-xs font-bold text-gray-700 mb-2">زايد وسوّم الآن بالريال السعودي *</label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  required 
+                  placeholder={`اكتب قيمة أعلى من ${auction.current_highest_bid}`} 
+                  value={bidAmount}
+                  className="w-full border border-gray-200 rounded-xl pl-16 pr-4 py-3.5 text-left font-black text-blue-600 focus:outline-none focus:border-blue-500 text-base" 
+                  dir="ltr"
+                  onChange={(e) => setBidAmount(e.target.value)}
+                />
+                <span className="absolute left-4 top-4 text-xs font-bold text-gray-400">ريال سعودي</span>
+              </div>
             </div>
-            <div className="border-r border-blue-200">
-              <span className="text-xs text-blue-600 font-bold block mb-1">🔥 أعلى سومة علنية الآن</span>
-              <span className="text-3xl font-black text-blue-700">{auction.current_highest_bid || auction.start_price || 50000} ريال</span>
-            </div>
-          </div>
-
-          {/* نموذج السوم العلني */}
-          <form onSubmit={handlePlaceBid} className="mt-8 flex gap-4">
-            <input 
-              type="number" 
-              required 
-              placeholder="اكتب سومتك الجديدة هنا..." 
-              value={userBid}
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-left font-bold text-lg" 
-              dir="ltr"
-              onChange={(e) => setUserBid(e.target.value)}
-            />
-            <button type="submit" className="bg-blue-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-700 transition">
-              زايد الآن 🔨
+            <button type="submit" className="w-full bg-gray-950 text-white font-bold py-3.5 rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
+              تأكيد وإرسال السومة حياً للموقع ←
             </button>
           </form>
         </div>
 
-        {/* لوحة سجل السومات الحية للزوار */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between">
+        {/* كشاف وسجل الشفافية ومكافحة الاحتيال */}
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">📋 سجل المزايدة الحي</h2>
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {bids.map((bid, index) => (
-                <div key={bid.id} className={`flex justify-between items-center p-3 rounded-xl text-sm ${index === 0 ? 'bg-green-50 border border-green-100 font-bold text-green-800' : 'bg-gray-50 text-gray-600'}`}>
-                  <span>{index === 0 ? '👑 الأعلى' : `#${bids.length - index}`}</span>
-                  <span className="font-mono">{bid.bid_amount} ريال</span>
+            <h3 className="text-sm font-black text-gray-900 mb-1">📊 سجل الشفافية والنزاهة للرادار</h3>
+            <p className="text-[10px] text-gray-400 mb-4">تحديث السومات جاري بالثانية لمنع التلاعب الوهمي.</p>
+            
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+              {bids.map((b, index) => (
+                <div key={b.id} className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <span className="text-xs font-bold text-gray-700">سومة رقم #{bids.length - index}</span>
+                  <span className="font-mono font-black text-sm text-blue-600">{b.bid_amount} ريال</span>
                 </div>
               ))}
-              {bids.length === 0 && <p className="text-gray-400 text-xs text-center py-6">لا توجد سومات بعد. كن أول المزايدين!</p>}
+              {bids.length === 0 && (
+                <p className="text-center py-6 text-xs text-gray-400 bg-gray-50 rounded-xl border border-dashed">📥 لا توجد سومات حالياً. كن أول من يسوّم!</p>
+              )}
             </div>
           </div>
 
-          <div className="bg-gray-900 text-white p-4 rounded-xl text-center text-xs mt-6">
-            🔒 تضمن منصتنا الشفافية التامة للجميع. بعد انتهاء الوقت، يتواصل فريقنا تلقائياً مع الفائز لتسليم السيارة وتحصيل الرسوم.
+          <div className="border-t pt-4 mt-6 text-center">
+            <span className="text-xs text-gray-400 block mb-1">السوم الحالي الأعلى:</span>
+            <span className="text-3xl font-black text-blue-600 font-mono tracking-tight">{auction.current_highest_bid} ريال</span>
           </div>
         </div>
 
@@ -193,7 +167,3 @@ export default function AuctionDetailPage({ params }: { params: { id: string } }
     </main>
   )
 }
-
-
-
-
