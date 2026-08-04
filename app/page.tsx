@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/supabaseClient'
 import Link from 'next/link'
-import Image from 'next/image' // 🌟 استيراد محرك الصور الذكي لفك شفرة الحماية
 
 export default function HomePage() {
   const [cars, setCars] = useState<any[]>([])
@@ -38,42 +37,47 @@ export default function HomePage() {
           </Link>
         </header>
 
-        {/* شبكة عرض كروت السيارات الجوجلية الحية */}
+        {/* شبكة عرض كروت السيارات الحية */}
         {loading ? (
           <p className="text-center py-12 text-gray-500 animate-pulse">جاري جلب وفحص السيارات حياً...</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {cars.map((car: any) => {
-              // تأمين الرابط الافتراضي الفاخر في حال عدم توفر صورة مع الإعلان
-              const finalImageUrl = car.image_url || 'https://unsplash.com'
+              // 🌟 تأمين وتثبيت رابط صورة سيارة رياضية خارقة ومحمية 100% لتظهر فوراً غصباً عن أي روابط تالفة أو فارغة بالسيرفر
+              const rawUrl = car.image_url ? car.image_url.trim() : ''
+              const hasValidImage = rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
+              const fallbackSportCarUrl = 'https://unsplash.com'
+              const finalImageUrl = hasValidImage ? rawUrl : fallbackSportCarUrl
               
               return (
                 <article key={car.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col justify-between hover:shadow-md transition duration-300">
                   <div>
-                    {/* 🌟 استخدام وسم Image المطور لكسر جدار الحماية وعرض الصور حياً وبأعلى دقة وسرعة */}
-                    <div className="relative w-full h-48 bg-gray-100">
-                      <Image 
+                    {/* استخدام مسار عرض ذكي وتقليدي صافي ومضمون يقبله المتصفح فوراً */}
+                    <div className="w-full h-48 bg-gray-100 relative">
+                      <img 
                         src={finalImageUrl} 
-                        alt={car.title || "سيارة"} 
-                        fill
-                        unoptimized // حظر معالجة الحجم لتسريع العرض الصاروخي للصور السحابية
-                        className="object-cover"
+                        alt="" 
+                        className="w-full h-48 object-cover"
+                        onError={(e) => {
+                          // خط دفاع أمني أخير: إذا انهار تحميل الصورة الأصلية لأي سبب، يستبدلها الجدار فوراً بالصورة الرياضية الفاخرة
+                          (e.target as HTMLImageElement).src = fallbackSportCarUrl
+                        }}
                       />
                     </div>
 
                     <div className="p-5">
-                      <h2 className="text-xl font-bold text-gray-900 mb-2">{car.title}</h2>
-                      <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed mb-4">{car.description}</p>
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">{car.title || 'سيارة معروضة في المزاد'}</h2>
+                      <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed mb-4">{car.description || 'لم يتم إضافة أوصاف تفصيلية للمركبة حالياً.'}</p>
                       
                       <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl font-bold text-xs">
-                        <span className="text-gray-500">الموديل: {car.model}</span>
-                        <span className="text-blue-600 font-black text-base">{car.price} {car.currency || 'ريال'}</span>
+                        <span className="text-gray-500">الموديل: {car.model || '2025'}</span>
+                        <span className="text-blue-600 font-black text-base">{car.price || '0'} {car.currency || 'ريال'}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="p-5 pt-0">
-                    <a href={`https://wa.me{car.whatsapp_number}`} target="_blank" rel="noreferrer" className="block text-center w-full bg-gray-900 text-white font-medium py-2.5 rounded-xl hover:bg-green-600 transition text-sm">
+                    <a href={`https://wa.me{car.whatsapp_number || '966'}`} target="_blank" rel="noreferrer" className="block text-center w-full bg-gray-900 text-white font-medium py-2.5 rounded-xl hover:bg-green-600 transition text-sm">
                       تواصل مع البائع عبر الواتساب 💬
                     </a>
                   </div>
@@ -93,5 +97,6 @@ export default function HomePage() {
     </main>
   )
 }
+
 
 
