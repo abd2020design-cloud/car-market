@@ -13,8 +13,8 @@ export default function AddCarPage() {
     model: '',
     description: '',
     image_url: '',
-    whatsapp_number: '',
-    seller_type: 'individual'
+    country: 'SA', 
+    currency: 'ريال' 
   })
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,8 +52,8 @@ export default function AddCarPage() {
     setLoading(true)
 
     try {
-      // 🌟 الرفع القياسي والصافي والأكثر استقراراً في سيرفرات نكست لضمان التصفير الكامل للأخطاء
-      const { error } = await supabase
+      // 🌟 تم إجبار جميع الحسابات (أفراد ومعارض) على رسوم الـ 10 ريال (is_paid = false تلقائياً) لجمع الكاش
+      const { data, error } = await supabase
         .from('cars')
         .insert([
           {
@@ -62,19 +62,19 @@ export default function AddCarPage() {
             model: carData.model,
             description: carData.description,
             image_url: carData.image_url,
-            whatsapp_number: carData.whatsapp_number,
-            seller_type: carData.seller_type
+            country: carData.country,
+            currency: carData.currency,
+            is_paid: false 
           }
         ])
+        .select()
 
       setLoading(false)
 
       if (!error) {
-        alert('✓ نجاح ساحق ومباشر: تم نشر إعلان سيارتك بنجاح في قاعدة البيانات المرقاة Pro!')
-        
-        // التوجيه التلقائي المباشر والمستقر للرئيسية لحرق أي تعليق
-        router.push('/')
-        router.refresh()
+        alert('✓ نجاح: تم تسجيل السيارة معلقاً بنجاح! جاري توجيهك لبوابة الدفع الآمنة لتفعيل النشر.')
+        // التوجيه التلقائي الموحد لصفحة الدفع لحصد رسوم المنصة
+        router.push('/payment?carId=' + (data?.[0]?.id || ''))
       } else {
         alert('تنبيه السيرفر: ' + error.message)
       }
@@ -90,43 +90,30 @@ export default function AddCarPage() {
       <div className="max-w-2xl mx-auto bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-gray-100">
         
         <header className="mb-8 border-b border-gray-100 pb-4">
-          <h1 className="text-2xl font-bold text-gray-900">إضافة سيارة جديدة للسوق 🏎️</h1>
-          <p className="text-gray-500 text-sm mt-1">يرجى ملء البيانات بدقة لتظهر للمشترين فوراً وبأعلى سرعة.</p>
+          <h1 className="text-2xl font-bold text-gray-900">إضافة سيارة - منصة عبدالرحمن للسيارات 🏎️</h1>
+          <p className="text-gray-500 text-sm mt-1">جميع الإعلانات خاضعة لرسوم النشر الموحدة (10 ريال سعودي) لضمان جدية التعامل.</p>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">اسم السيارة (العنوان) *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">اسم وماركة السيارة *</label>
             <input type="text" required placeholder="مثال: تويوتا كامري فل كامل" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right" onChange={(e) => setCarData({ ...carData, title: e.target.value })} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">السعر (بالعملة المحلية) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">السعر (بالريال السعودي) *</label>
               <input type="number" required placeholder="اكتب السعر الإجمالي" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-left" dir="ltr" onChange={(e) => setCarData({ ...carData, price: e.target.value })} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">سنة الصنع (الموديل) *</label>
-              <input type="text" required placeholder="مثال: 2025" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-center" onChange={(e) => setCarData({ ...carData, model: e.target.value })} />
+              <input type="text" required placeholder="مثال: 2026" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-center" onChange={(e) => setCarData({ ...carData, model: e.target.value })} />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">نوع المعلن (باقة الحساب)</label>
-            <select className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right font-medium" value={carData.seller_type} onChange={(e) => setCarData({ ...carData, seller_type: e.target.value })}>
-              <option value="individual">حساب فرد عادي (رسوم 10 ريال)</option>
-              <option value="dealer">معرض معتمد / تاجر (نشر فوري مجاني)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">رقم الواتساب للتواصل *</label>
-            <input type="tel" required placeholder="9665xxxxxxxx" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-left" dir="ltr" onChange={(e) => setCarData({ ...carData, whatsapp_number: e.target.value })} />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">وصف ومواصفات السيارة *</label>
-            <textarea rows={4} required placeholder="اكتب حالة البدي، الممشى، المواصفات الداخلية..." className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right" onChange={(e) => setCarData({ ...carData, description: e.target.value })}></textarea>
+            <label className="block text-sm font-medium text-gray-700 mb-2">وصف ومواصفات حالة السيارة بالكامل *</label>
+            <textarea rows={4} required placeholder="اكتب حالة البدي، الممشى، المواصفات الداخلية لتسهيل فحص الإدارة والقبول..." className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right" onChange={(e) => setCarData({ ...carData, description: e.target.value })}></textarea>
           </div>
 
           <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center bg-gray-50">
@@ -137,8 +124,8 @@ export default function AddCarPage() {
             )}
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-gray-950 text-white font-bold py-3.5 rounded-xl hover:bg-blue-600 transition disabled:bg-gray-400">
-            {loading ? 'جاري معالجة البيانات والرفع المباشر...' : 'نشر إعلان السيارة في السوق الإقليمي ←'}
+          <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition disabled:bg-gray-400 text-sm shadow-md">
+            {loading ? 'جاري معالجة البيانات والرفع المباشر...' : 'الانتقال لسداد الرسوم ونشر الإعلان حياً ←'}
           </button>
         </form>
 
@@ -146,7 +133,3 @@ export default function AddCarPage() {
     </main>
   )
 }
-
-
-
-
