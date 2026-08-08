@@ -9,14 +9,14 @@ export default function AddCarPage() {
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [adminToken, setAdminToken] = useState('')
-  const [isSubscribed, setIsSubscribed] = useState(false) // ذاكرة فحص باقة العميل
+  const [isSubscribed, setIsSubscribed] = useState(false)
   const [carData, setCarData] = useState({
     title: '',
     price: '',
     model: '',
     description: '',
     image_url: '',
-    whatsapp_number: ''
+    seller_type: 'individual'
   })
 
   useEffect(() => {
@@ -24,8 +24,6 @@ export default function AddCarPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
-        
-        // 🌟 فحص هل حساب هذا المستخدم يمتلك اشتراكاً نشطاً قمنا بتفعيله له بالسيرفر؟
         const { data, error } = await supabase
           .from('cars')
           .select('is_account_subscribed')
@@ -73,8 +71,6 @@ export default function AddCarPage() {
 
     setLoading(true)
     const isMasterAdmin = adminToken.trim() === 'ADMIN1B'
-    
-    // 🌟 العميل يرفع مجاناً وفوراً إذا كان الأدمن أو يملك باقة اشتراك حساب نشطة ودفع الـ 10 ريال مسبقاً
     const hasFullAccess = isMasterAdmin || isSubscribed
 
     try {
@@ -87,9 +83,8 @@ export default function AddCarPage() {
             model: carData.model,
             description: carData.description,
             image_url: carData.image_url,
-            whatsapp_number: carData.whatsapp_number.trim(),
             user_id: user.id,
-            is_paid: hasFullAccess ? true : false, // نشر فوري للمشتركين، ومعلق لغير المشتركين
+            is_paid: hasFullAccess ? true : false,
             is_account_subscribed: isSubscribed
           }
         ])
@@ -125,9 +120,9 @@ export default function AddCarPage() {
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-gray-50 border border-gray-150 p-4 rounded-2xl">
-            <label className="block text-xs font-bold text-gray-500 mb-1">🔑 كود التخطي المطلق (خاص بالأدمن ولدعم أصدقائك مجاناً)</label>
-            <input type="text" placeholder="اكتب كود الإدارة لتجاوز فحص باقة الاشتراك..." value={adminToken} className="w-full border border-gray-250 rounded-xl px-4 py-2 focus:outline-none focus:border-blue-500 text-center font-mono text-xs bg-white" onChange={(e) => setAdminToken(e.target.value)} />
+          <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-2xl">
+            <label className="block text-xs font-black text-blue-700 mb-2">🔑 كود التخطي المطلق (خاص بالأدمن ولدعم أصدقائك مجاناً)</label>
+            <input type="text" placeholder="اكتب كود الإدارة لتجاوز فحص باقة الاشتراك..." value={adminToken} className="w-full border border-blue-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-center font-mono font-bold text-sm bg-white" onChange={(e) => setAdminToken(e.target.value)} />
           </div>
 
           <div>
@@ -147,11 +142,6 @@ export default function AddCarPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">رقم الواتساب للتواصل *</label>
-            <input type="tel" required placeholder="9665xxxxxxxx" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-left" dir="ltr" onChange={(e) => setCarData({ ...carData, whatsapp_number: e.target.value })} />
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">وصف ومواصفات حالة السيارة بالكامل *</label>
             <textarea rows={4} required placeholder="اكتب تفاصيل حالة المركبة..." className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 text-right" onChange={(e) => setCarData({ ...carData, description: e.target.value })}></textarea>
           </div>
@@ -163,7 +153,7 @@ export default function AddCarPage() {
           </div>
 
           <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition disabled:bg-gray-400 text-sm shadow-md">
-            {loading ? 'جاري فحص باقة العضوية المحدثة...' : 'تأكيد ونشر الإعلان حياً في السوق ←'}
+            {loading ? 'جاري معالجة البيانات والرفع المباشر...' : 'تأكيد ونشر الإعلان حياً في السوق ←'}
           </button>
         </form>
 
