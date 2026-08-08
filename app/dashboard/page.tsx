@@ -32,17 +32,20 @@ export default function AdminDashboardPage() {
     fetchAdminCars()
   }, [])
 
-  // 🌟 دالة الموافقة والنشر الفوري للإعلانات المعلقة بضغطة زر دون دفع
+  // 🌟 دالة الموافقة والنشر الفوري المحدثة - تجعل السيارة تقفز للأعلى فوراً
   const handleApproveCar = async (carId: number) => {
     try {
       const { error } = await supabase
         .from('cars')
-        .update({ is_paid: true }) // قلب حالة الدفع لنشط فوراً
+        .update({ 
+          is_paid: true, 
+          created_at: new Date().toISOString() // 🌟 السر هنا: تحديث وقت الإعلان للحظة الحالية لتتربع السيارة في أعلى الصفحة الرئيسية!
+        }) 
         .eq('id', carId)
 
       if (!error) {
-        alert("🚀 نجاح إداري: تم الموافقة على الإعلان وتفعيله حياً في السوق الرئيسي فوراً ومجاناً!")
-        fetchAdminCars() // إنعاش تلقائي للجدول لتحديث الحالة أم عينك
+        alert("🚀 نجاح إداري: تم تفعيل الإعلان بنجاح وقفزت السيارة إلى أعلى القائمة بالصفحة الرئيسية فوراً!")
+        fetchAdminCars() // إنعاش تلقائي للجدول لتحديث الحالة أمام عينك
       } else {
         alert("فشل السيرفر في التفعيل: " + error.message)
       }
@@ -87,7 +90,7 @@ export default function AdminDashboardPage() {
               <span className="bg-gray-950 text-white font-black text-xs px-2 py-0.5 rounded">Master Control 1B</span>
             </div>
             <h1 className="text-3xl font-black text-gray-900">لوحة تحكم المشرف العام ⚙️</h1>
-            <p className="text-gray-500 text-sm mt-1">بصفتك عبدالرحمن (الأدمن)، يمكنك مراقبة السوق، الموافقة ونشر المعلق، وحذف المخالفات حياً.</p>
+            <p className="text-gray-500 text-sm mt-1">بصفتك عبدالرحمن (الأدمن)، يمكنك مراقبة السوق، الموافقة ونشر المعلق ليرتفع للأعلى، وحذف المخالفات حياً.</p>
           </div>
           <Link href="/dashboard/add-car" className="bg-blue-600 text-white font-bold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-sm text-xs">
             + إضافة سيارة جديدة للمنصة
@@ -130,14 +133,14 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex justify-center gap-3">
-                        {/* 🌟 زر الموافقة والتفعيل الفوري للإعلانات المعلقة يظهر فقط إذا كانت السيارة لم تدفع بعد */}
+                        {/* زر الموافقة والتفعيل المطور والقفز الفوري للأعلى */}
                         {!car.is_paid && (
                           <button 
                             type="button"
                             onClick={() => handleApproveCar(car.id)} 
                             className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 font-bold transition text-xs shadow-sm"
                           >
-                            🚀 موافقة ونشر فوري
+                            🚀 موافقة ونشر فوري للأعلى
                           </button>
                         )}
                         
