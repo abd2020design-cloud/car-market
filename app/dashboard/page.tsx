@@ -13,7 +13,7 @@ export default function AdminDashboardPage() {
   // أدوات الحذف الجماعي الذكية
   const [selectedCarIds, setSelectedCarIds] = useState<number[]>([])
 
-  // فلاتر البحث والفرز للأدمن
+  // fلاتر البحث والفرز للأدمن
   const [adminSearch, setAdminSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
 
@@ -224,15 +224,17 @@ export default function AdminDashboardPage() {
           </Link>
         </header>
 
-        {/* كروت لوحة الإحصائيات الأربعة المحبوكة */}
+        {/* 🌟 كروت لوحة الإحصائيات الأربعة - مقفلة ومربوطة بأمان 100% */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-gray-150 shadow-sm">
             <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">🚗 إجمالي الإعلانات</span>
             <span className="text-2xl font-black text-gray-950 font-mono">{totalCarsCount}</span>
           </div>
+          
           <div className="bg-white p-5 rounded-2xl border border-gray-150 shadow-sm">
             <span className="text-[10px] font-bold text-amber-600 uppercase block mb-1">⏳ إعلانات معلقة</span>
             <span className="text-2xl font-black text-amber-600 font-mono">{pendingCarsCount}</span>
           </div>
+          
           <div className="bg-white p-5 rounded-2xl border border-gray-150 shadow-sm">
             <span className="text-[10px] font-bold text-blue-600 uppercase block mb-1">🔨 المزادات النشطة</span>
