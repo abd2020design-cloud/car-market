@@ -17,9 +17,9 @@ export default function AdminDashboardPage() {
   const [adminSearch, setAdminSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
 
-  // أدوات إطلاق المزاد بالساعات المحدثة
+  // أدوات إطلاق المزاد بالساعات
   const [activeCarForAuction, setActiveCarForAuction] = useState<number | null>(null)
-  const [auctionData, setAuctionData] = useState({ start_price: '', end_hours: '1' }) // 🌟 القيمة الافتراضية ساعة واحدة
+  const [auctionData, setAuctionData] = useState({ start_price: '', end_hours: '1' })
 
   // دالة جلب كافة البيانات الحية من قاعدة بيانات سوبابيز المرقاة Pro
   const fetchAdminMasterData = async () => {
@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
     setLoading(false)
   }
 
-  // 🌟 دالة إطلاق وتفعيل المزاد العلني حياً بنظام الساعات الجديد
+  // دالة إطلاق وتفعيل المزاد العلني حياً بنظام الساعات الجديد
   const handleLaunchAuction = async (e: React.FormEvent, carId: number) => {
     e.preventDefault()
     if (!auctionData.start_price) return alert("يرجى كتابة السعر الافتتاحي!")
@@ -109,7 +109,6 @@ export default function AdminDashboardPage() {
     const startPriceNum = parseFloat(auctionData.start_price)
     const hoursNum = parseInt(auctionData.end_hours, 10)
     
-    // 🌟 السر هنا: حساب تاريخ ووقت نهاية المزاد بالساعات الحالية لضمان تشغيل عدة مزادات في اليوم!
     const endTime = new Date()
     endTime.setHours(endTime.getHours() + hoursNum)
 
@@ -225,7 +224,7 @@ export default function AdminDashboardPage() {
           </Link>
         </header>
 
-        {/* كروت لوحة الإحصائيات */}
+        {/* كروت لوحة الإحصائيات الأربعة المحبوكة */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-gray-150 shadow-sm">
             <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">🚗 إجمالي الإعلانات</span>
@@ -236,3 +235,4 @@ export default function AdminDashboardPage() {
             <span className="text-2xl font-black text-amber-600 font-mono">{pendingCarsCount}</span>
           </div>
           <div className="bg-white p-5 rounded-2xl border border-gray-150 shadow-sm">
+            <span className="text-[10px] font-bold text-blue-600 uppercase block mb-1">🔨 المزادات النشطة</span>
