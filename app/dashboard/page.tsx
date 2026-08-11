@@ -41,7 +41,7 @@ export default function AdminDashboardPage() {
     fetchAdminData()
   }, [])
 
-  // 🌟 دالة إطلاق وتفعيل المزاد العلني فوراً وحياً لأي سيارة في الموقع
+  // دالة إطلاق وتفعيل المزاد العلني فوراً وحياً لأي سيارة في الموقع
   const handleLaunchAuction = async (e: React.FormEvent, carId: number) => {
     e.preventDefault()
     if (!auctionData.start_price) return alert("يرجى كتابة السعر الافتتاحي أولاً!")
@@ -49,7 +49,6 @@ export default function AdminDashboardPage() {
     const startPriceNum = parseFloat(auctionData.start_price)
     const daysNum = parseInt(auctionData.end_days, 10)
 
-    // حساب تاريخ نهاية المزاد بناءً على الأيام المحددة
     const endTime = new Date()
     endTime.setDate(endTime.getDate() + daysNum)
 
@@ -95,7 +94,7 @@ export default function AdminDashboardPage() {
     }
   }
 
-  // دالة السحق والحذف الفتاكة للأدمن لحذف الإعلانات المخالفة
+  // دالة الحذف الفتاكة للأدمن لحذف الإعلانات المخالفة
   const handleDeleteCar = async (carId: number) => {
     const confirmDelete = window.confirm("⚠️ تنبيه إداري حاسم: هل أنت متأكد من حذف هذا الإعلان نهائياً؟")
     if (!confirmDelete) return
@@ -132,7 +131,7 @@ export default function AdminDashboardPage() {
           </Link>
         </header>
 
-        {/* القسم الأول: مستودع السيارات وإطلاق المزادات الحية */}
+        {/* مستودع السيارات وإطلاق المزادات الحية */}
         <section className="bg-white p-6 rounded-3xl shadow-sm border border-gray-150 overflow-hidden">
           <div className="mb-6 border-r-4 border-gray-950 pr-3">
             <h2 className="text-xl font-bold text-gray-900">🚗 كشاف جرد المركبات وإطلاق المزادات</h2>
@@ -169,7 +168,6 @@ export default function AdminDashboardPage() {
                     <td className="p-4">
                       <div className="flex flex-col gap-2 items-center">
                         <div className="flex justify-center gap-3">
-                          {/* 🌟 زر فتح وإغلاق استمارة تحويل المركبة لمزاد حي */}
                           <button 
                             type="button"
                             onClick={() => setActiveCarForAuction(activeCarForAuction === car.id ? null : car.id)}
@@ -185,7 +183,6 @@ export default function AdminDashboardPage() {
                           <button type="button" onClick={() => handleDeleteCar(car.id)} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-600 hover:text-white font-bold transition text-xs border border-red-100">حذف الإعلان 🗑️</button>
                         </div>
 
-                        {/* 🌟 استمارة إطلاق المزاد الذكية تفتح تحت السيارة المحددة بالثانية */}
                         {activeCarForAuction === car.id && (
                           <form onSubmit={(e) => handleLaunchAuction(e, car.id)} className="w-full max-w-sm mt-3 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl space-y-3 text-right">
                             <div className="grid grid-cols-2 gap-3">
@@ -201,3 +198,6 @@ export default function AdminDashboardPage() {
                                   <option value="5">5 أيام</option>
                                 </select>
                               </div>
+                            </div>
+                            <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded-xl text-xs hover:bg-blue-700 transition shadow-sm">
+                              إطلاق وتفعيل عداد المزاد حياً الآن 🚀
