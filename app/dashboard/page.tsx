@@ -238,3 +238,4 @@ export default function AdminDashboardPage() {
           
           <div className="bg-white p-5 rounded-2xl border border-gray-150 shadow-sm">
             <span className="text-[10px] font-bold text-blue-600 uppercase block mb-1">🔨 المزادات النشطة</span>
+        </div>      
